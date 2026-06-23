@@ -1,0 +1,8 @@
+cert-manager:
+  crds:
+    enabled: true
+  featureGates: "ExperimentalGatewayAPISupport=true"
+  prometheus:
+    enabled: true
+    servicemonitor:
+      enabled: true

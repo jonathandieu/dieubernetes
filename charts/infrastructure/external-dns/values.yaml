@@ -1,0 +1,15 @@
+external-dns:
+  provider:
+    name: cloudflare
+  env:
+    - name: CF_API_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: cloudflare-api-token
+          key: token
+  # Only manage records with this annotation — prevents external-dns from
+  # touching records managed by Terraform (cluster subdomains, service CNAMEs)
+  txtOwnerId: dieubernetes
+  policy: sync
+  sources:
+    - gateway-httproute

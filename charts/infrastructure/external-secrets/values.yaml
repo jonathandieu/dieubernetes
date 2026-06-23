@@ -1,0 +1,6 @@
+external-secrets:
+  installCRDs: true
+  # ClusterSecretStore pointing at 1Password is deployed separately
+  # via clusters/{name}/overrides/external-secrets.yaml or a dedicated
+  # bootstrap Application — it requires the 1Password Connect token which
+  # comes from ESO itself (chicken-and-egg handled by initial secret bootstrap)
