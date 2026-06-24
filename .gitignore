@@ -1,0 +1,8 @@
+# Helm
+charts/**/charts/
+charts/**/.helm-deps/
+
+# Secrets (should never be committed)
+*.secret.yaml
+*-secret.yaml
+secrets/

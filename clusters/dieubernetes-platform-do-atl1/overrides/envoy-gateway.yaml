@@ -1,0 +1,8 @@
+gateway-helm:
+  config:
+    envoyGateway:
+      provider:
+        kubernetes:
+          envoyService:
+            annotations:
+              service.beta.kubernetes.io/do-loadbalancer-id: "e80ddc3a-9ee3-447c-b87e-66f897bb1b00"

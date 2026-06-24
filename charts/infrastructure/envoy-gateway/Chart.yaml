@@ -1,0 +1,8 @@
+apiVersion: v2
+name: envoy-gateway
+description: Envoy Gateway — cloud-agnostic Gateway API implementation
+version: 0.1.0
+dependencies:
+  - name: gateway-helm
+    version: "v1.8.1"
+    repository: oci://docker.io/envoyproxy

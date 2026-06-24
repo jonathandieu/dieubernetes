@@ -1,0 +1,22 @@
+gateway-helm:
+  config:
+    envoyGateway:
+      gateway:
+        controllerName: gateway.envoyproxy.io/gatewayclass-controller
+      provider:
+        type: Kubernetes
+        kubernetes:
+          # DO load balancer ID is set per-cluster in clusters/{name}/overrides/envoy-gateway.yaml
+          # so the pre-provisioned LB is adopted rather than a new one being created.
+          envoyService:
+            annotations: {}
+
+  # Deploy the default GatewayClass so HTTPRoutes can reference it
+  gatewayClass:
+    create: true
+    name: envoy-gateway
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: infrastructure
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - clusters: {}
+          - list:
+              elements:
+                - app: cert-manager
+                  namespace: cert-manager
+                  wave: "-1"
+                - app: onepassword-connect
+                  namespace: external-secrets
+                  wave: "-1"
+                - app: envoy-gateway
+                  namespace: envoy-gateway-system
+                  wave: "0"
+                - app: external-dns
+                  namespace: external-dns
+                  wave: "0"
+                - app: external-secrets
+                  namespace: external-secrets
+                  wave: "0"
+  template:
+    metadata:
+      name: "{{ .app }}-{{ .name }}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+    spec:
+      project: default
+      sources:
+        # ref-only source: provides cluster-specific value overrides
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          ref: values
+        # chart source: umbrella chart with base values + optional cluster override
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          path: "charts/infrastructure/{{ .app }}"
+          helm:
+            valueFiles:
+              - values.yaml
+              - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

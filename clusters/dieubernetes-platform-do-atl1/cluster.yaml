@@ -1,0 +1,6 @@
+name: dieubernetes-platform-do-atl1
+provider: do
+account: platform
+region: atl1
+labels:
+  purpose: platform
