@@ -1,0 +1,18 @@
+kube-prometheus-stack:
+  grafana:
+    enabled: false  # using Grafana Cloud
+
+  prometheus:
+    prometheusSpec:
+      remoteWrite:
+        - url: https://prometheus-prod-66-prod-us-east-3.grafana.net/api/prom/push
+          basicAuth:
+            username:
+              name: grafana-cloud-credentials
+              key: username
+            password:
+              name: grafana-cloud-credentials
+              key: password
+
+  alertmanager:
+    enabled: false
