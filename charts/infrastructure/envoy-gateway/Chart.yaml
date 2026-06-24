@@ -4,5 +4,5 @@ description: Envoy Gateway — cloud-agnostic Gateway API implementation
 version: 0.1.0
 dependencies:
   - name: gateway-helm
-    version: "1.8.1"
-    repository: https://gateway.envoyproxy.io/helm
+    version: "v1.8.1"
+    repository: oci://docker.io/envoyproxy

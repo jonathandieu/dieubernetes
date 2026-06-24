@@ -1,5 +1,5 @@
 # Helm
-charts/*/charts/
+charts/**/charts/
 charts/**/.helm-deps/
 
 # Secrets (should never be committed)

@@ -1,0 +1,5 @@
+connect:
+  # credentialsName matches the secret dieuctl creates at cluster bootstrap
+  credentialsName: op-credentials
+  credentialsKey: 1password-credentials.json
+  serviceType: ClusterIP
