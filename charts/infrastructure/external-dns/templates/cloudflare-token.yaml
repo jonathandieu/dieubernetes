@@ -15,5 +15,4 @@ spec:
   data:
     - secretKey: token
       remoteRef:
-        key: Cloudflare Account API Token
-        property: credential
+        key: nyanfji2utddkz7vpfqstataoe/credential
