@@ -1,4 +1,4 @@
-name: dieubernetes-platform-do-atl1
+name: platform-do-atl1
 provider: do
 account: platform
 region: atl1
