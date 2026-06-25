@@ -11,26 +11,21 @@ spec:
           - clusters: {}
           - list:
               elements:
+                - app: kube-prometheus-stack
+                  namespace: monitoring
+                - app: metrics-server
+                  namespace: kube-system
                 - app: cert-manager
                   namespace: cert-manager
-                  wave: "-1"
-                - app: onepassword-connect
-                  namespace: external-secrets
-                  wave: "-1"
                 - app: envoy-gateway
                   namespace: envoy-gateway-system
-                  wave: "0"
                 - app: external-dns
                   namespace: external-dns
-                  wave: "0"
                 - app: external-secrets
                   namespace: external-secrets
-                  wave: "0"
   template:
     metadata:
       name: "{{ .app }}-{{ .name }}"
-      annotations:
-        argocd.argoproj.io/sync-wave: "{{ .wave }}"
     spec:
       project: default
       sources:
@@ -57,3 +52,10 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m
