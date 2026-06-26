@@ -60,7 +60,6 @@ jobs:
 
   kube-lint:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
@@ -103,7 +102,7 @@ jobs:
             [ -f "$chart/Chart.yaml" ] || continue
             echo "--- $chart ---"
             helm dependency build "$chart"
-            helm template release "$chart" | kube-linter lint --format plain -
+            helm template release "$chart" | kube-linter lint --config .kube-linter.yaml --format plain -
           done
 
   helm-diff:
