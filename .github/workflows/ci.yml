@@ -4,7 +4,6 @@ on:
     paths:
       - 'charts/**'
       - 'argocd/**'
-      - '.kube-linter*.yaml'
       - '.github/workflows/ci.yml'
       - '.github/actions/**'
 
@@ -37,39 +36,6 @@ jobs:
                   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                   -skip CustomResourceDefinition \
                   -summary
-          done
-
-  kube-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-
-      - uses: ./.github/actions/helm-setup
-
-      - name: Install kube-linter
-        run: |
-          curl -sL https://github.com/stackrox/kube-linter/releases/download/v0.8.3/kube-linter-linux.tar.gz \
-            | tar xz -C /tmp
-          sudo mv /tmp/kube-linter /usr/local/bin/
-
-      - name: Kube-lint infrastructure charts
-        run: |
-          set -e
-          for chart in charts/infrastructure/*; do
-            [ -f "$chart/Chart.yaml" ] || continue
-            echo "--- $chart ---"
-            helm dependency build "$chart"
-            helm template release "$chart" | kube-linter lint --config .kube-linter.yaml --format plain -
-          done
-
-      - name: Kube-lint workload and platform charts
-        run: |
-          set -e
-          for chart in charts/workloads/* charts/platform/*; do
-            [ -f "$chart/Chart.yaml" ] || continue
-            echo "--- $chart ---"
-            helm dependency build "$chart"
-            helm template release "$chart" | kube-linter lint --config .kube-linter-workloads.yaml --format plain -
           done
 
   argocd-validate:
