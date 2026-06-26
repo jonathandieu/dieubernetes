@@ -1,0 +1,59 @@
+name: CI
+on:
+  pull_request:
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+
+      - name: Cache helm repository index
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/helm
+          key: helm-${{ hashFiles('charts/**/Chart.yaml', 'charts/**/Chart.lock') }}
+          restore-keys: helm-
+
+      - name: Add helm repos
+        run: |
+          python3 -c "
+          import yaml, glob
+          repos = set()
+          for f in glob.glob('charts/**/Chart.yaml', recursive=True):
+              with open(f) as fh:
+                  data = yaml.safe_load(fh)
+              for dep in (data or {}).get('dependencies', []):
+                  repo = dep.get('repository', '')
+                  if repo and not repo.startswith('oci://'):
+                      repos.add(repo)
+          for i, repo in enumerate(sorted(repos)):
+              print(f'helm repo add repo-{i} {repo}')
+          " | bash
+          helm repo update
+          mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/
+
+      - name: Lint and validate charts
+        run: |
+          set -e
+          for chart in charts/*/*; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            echo "--- $chart ---"
+            helm dependency build "$chart"
+            helm lint "$chart"
+            helm template release "$chart" \
+              | kubeconform -strict \
+                  -kubernetes-version 1.36.0 \
+                  -schema-location default \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -skip CustomResourceDefinition \
+                  -summary
+          done
