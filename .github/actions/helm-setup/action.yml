@@ -16,18 +16,15 @@ runs:
     - name: Add helm repos
       shell: bash
       run: |
-        python3 -c "
-        import subprocess, yaml, glob
-        repos = set()
-        for f in glob.glob('**/Chart.yaml', recursive=True):
-            with open(f) as fh:
-                data = yaml.safe_load(fh)
-            for dep in (data or {}).get('dependencies', []):
-                repo = dep.get('repository', '')
-                if repo and not repo.startswith('oci://'):
-                    repos.add(repo)
-        for i, repo in enumerate(sorted(repos)):
-            subprocess.run(['helm', 'repo', 'add', f'repo-{i}', repo], check=True)
-        "
+        i=0
+        while IFS= read -r repo; do
+          helm repo add "repo-$i" "$repo"
+          i=$((i+1))
+        done < <(
+          find . -name "Chart.yaml" \
+            | xargs yq '.dependencies[].repository // empty' 2>/dev/null \
+            | grep -v '^oci://' \
+            | sort -u
+        )
         helm repo update
         mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json

@@ -23,7 +23,7 @@ jobs:
 
       - name: Lint and validate charts
         run: |
-          set -e
+          set -eo pipefail
           for chart in charts/*/*; do
             [ -f "$chart/Chart.yaml" ] || continue
             echo "--- $chart ---"
