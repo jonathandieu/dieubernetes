@@ -105,3 +105,83 @@ jobs:
             helm dependency build "$chart"
             helm template release "$chart" | kube-linter lint --format plain -
           done
+
+  helm-diff:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: head
+
+      - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
+
+      - name: Add helm repos
+        run: |
+          python3 -c "
+          import yaml, glob
+          repos = set()
+          for pattern in ['base/charts/**/Chart.yaml', 'head/charts/**/Chart.yaml']:
+              for f in glob.glob(pattern, recursive=True):
+                  with open(f) as fh:
+                      data = yaml.safe_load(fh)
+                  for dep in (data or {}).get('dependencies', []):
+                      repo = dep.get('repository', '')
+                      if repo and not repo.startswith('oci://'):
+                          repos.add(repo)
+          for i, repo in enumerate(sorted(repos)):
+              print(f'helm repo add repo-{i} {repo}')
+          " | bash
+          helm repo update
+          mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json
+
+      - name: Render templates
+        run: |
+          mkdir -p /tmp/base /tmp/head
+          for dir in base head; do
+            for chart in $dir/charts/*/*; do
+              [ -f "$chart/Chart.yaml" ] || continue
+              name=$(basename "$chart")
+              helm dependency build "$chart" 2>/dev/null || true
+              helm template release "$chart" > /tmp/$dir/$name.yaml 2>/dev/null || true
+            done
+          done
+
+      - name: Diff templates
+        id: diff
+        run: |
+          output=$(diff -u --recursive --label base --label head /tmp/base /tmp/head 2>/dev/null || true)
+          if [ -z "$output" ]; then
+            output="No template changes detected."
+          else
+            output=$(echo "$output" | head -c 60000)
+          fi
+          {
+            echo 'result<<DIFF_EOF'
+            echo "$output"
+            echo 'DIFF_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const result = process.env.DIFF_RESULT
+            const noChanges = result.trim() === 'No template changes detected.'
+            const body = noChanges
+              ? '## Helm template diff\n\nNo template changes detected.'
+              : '## Helm template diff\n\n```diff\n' + result + '\n```'
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            })
+        env:
+          DIFF_RESULT: ${{ steps.diff.outputs.result }}
