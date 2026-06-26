@@ -1,6 +1,11 @@
 name: CI
 on:
   pull_request:
+    paths:
+      - 'charts/**'
+      - 'argocd/**'
+      - '.kube-linter*.yaml'
+      - '.github/workflows/ci.yml'
 
 jobs:
   helm:
@@ -96,14 +101,44 @@ jobs:
             | tar xz -C /tmp
           sudo mv /tmp/kube-linter /usr/local/bin/
 
-      - name: Kube-lint charts
+      - name: Kube-lint infrastructure charts
         run: |
-          for chart in charts/*/*; do
+          set -e
+          for chart in charts/infrastructure/*; do
             [ -f "$chart/Chart.yaml" ] || continue
             echo "--- $chart ---"
             helm dependency build "$chart"
             helm template release "$chart" | kube-linter lint --config .kube-linter.yaml --format plain -
           done
+
+      - name: Kube-lint workload and platform charts
+        run: |
+          set -e
+          for chart in charts/workloads/* charts/platform/*; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            echo "--- $chart ---"
+            helm dependency build "$chart"
+            helm template release "$chart" | kube-linter lint --config .kube-linter-workloads.yaml --format plain -
+          done
+
+  argocd-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /tmp
+          sudo mv /tmp/kubeconform /usr/local/bin/
+
+      - name: Validate ArgoCD manifests
+        run: |
+          find argocd -name '*.yaml' | xargs kubeconform -strict \
+            -kubernetes-version 1.36.0 \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            -summary
 
   helm-diff:
     runs-on: ubuntu-latest
