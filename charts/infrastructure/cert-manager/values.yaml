@@ -5,3 +5,5 @@ cert-manager:
     enabled: true
     servicemonitor:
       enabled: true
+  startupapicheck:
+    ttlSecondsAfterFinished: 60
