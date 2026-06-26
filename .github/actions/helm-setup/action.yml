@@ -10,16 +10,16 @@ runs:
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/.cache/helm
-        key: helm-${{ hashFiles('charts/**/Chart.yaml', 'charts/**/Chart.lock') }}
+        key: helm-${{ hashFiles('**/Chart.yaml', '**/Chart.lock') }}
         restore-keys: helm-
 
     - name: Add helm repos
       shell: bash
       run: |
         python3 -c "
-        import yaml, glob
+        import subprocess, yaml, glob
         repos = set()
-        for f in glob.glob('charts/**/Chart.yaml', recursive=True) + glob.glob('*/charts/**/Chart.yaml', recursive=True):
+        for f in glob.glob('**/Chart.yaml', recursive=True):
             with open(f) as fh:
                 data = yaml.safe_load(fh)
             for dep in (data or {}).get('dependencies', []):
@@ -27,7 +27,7 @@ runs:
                 if repo and not repo.startswith('oci://'):
                     repos.add(repo)
         for i, repo in enumerate(sorted(repos)):
-            print(f'helm repo add repo-{i} {repo}')
-        " | bash
+            subprocess.run(['helm', 'repo', 'add', f'repo-{i}', repo], check=True)
+        "
         helm repo update
         mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json
