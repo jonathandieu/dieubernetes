@@ -1,30 +1,11 @@
 name: Helm setup
-description: Install helm, add repos dynamically from Chart.yaml files, configure Docker for OCI
+description: Install helm and configure Docker for OCI registry access
 
 runs:
   using: composite
   steps:
     - uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4
 
-    - name: Cache helm repository index
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: ~/.cache/helm
-        key: helm-${{ hashFiles('**/Chart.yaml', '**/Chart.lock') }}
-        restore-keys: helm-
-
-    - name: Add helm repos
+    - name: Configure Docker for OCI
       shell: bash
-      run: |
-        i=0
-        while IFS= read -r repo; do
-          helm repo add "repo-$i" "$repo"
-          i=$((i+1))
-        done < <(
-          find . -name "Chart.yaml" \
-            | xargs yq '.dependencies[]?.repository | select(. != null)' 2>/dev/null \
-            | grep -E '^https?://' \
-            | sort -u
-        )
-        helm repo update
-        mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json
+      run: mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json

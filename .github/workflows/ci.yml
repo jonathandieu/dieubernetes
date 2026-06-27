@@ -27,7 +27,21 @@ jobs:
           for chart in charts/*/*; do
             [ -f "$chart/Chart.yaml" ] || continue
             echo "--- $chart ---"
-            helm dependency build "$chart"
+
+            lock_before=""
+            [ -f "$chart/Chart.lock" ] && lock_before=$(sha256sum "$chart/Chart.lock" | cut -d' ' -f1)
+
+            helm dependency update "$chart" --skip-refresh 2>/dev/null \
+              || helm dependency update "$chart"
+
+            if [ -n "$lock_before" ]; then
+              lock_after=$(sha256sum "$chart/Chart.lock" | cut -d' ' -f1)
+              if [ "$lock_before" != "$lock_after" ]; then
+                echo "::error::Chart.lock drifted for $chart — run 'helm dependency update' locally and commit the result"
+                exit 1
+              fi
+            fi
+
             helm lint "$chart"
             helm template release "$chart" \
               | kubeconform -strict \
@@ -82,7 +96,9 @@ jobs:
             for chart in $dir/charts/*/*; do
               [ -f "$chart/Chart.yaml" ] || continue
               name=$(basename "$chart")
-              helm dependency build "$chart" 2>&1 || true
+              helm dependency update "$chart" --skip-refresh 2>/dev/null \
+                || helm dependency update "$chart" 2>/dev/null \
+                || true
               if ! helm template release "$chart" > /tmp/$dir/$name.yaml 2>&1; then
                 echo "# helm template failed for $chart" > /tmp/$dir/$name.yaml
               fi
