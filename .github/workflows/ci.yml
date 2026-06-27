@@ -16,9 +16,16 @@ jobs:
       - uses: ./.github/actions/helm-setup
 
       - name: Install kubeconform
+        env:
+          VERSION: v0.6.7
         run: |
-          curl -sfL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
-            | tar xz -C /tmp
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o /tmp/kubeconform.tar.gz
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/CHECKSUMS" \
+            | grep linux-amd64.tar.gz \
+            | sed 's|kubeconform-linux-amd64.tar.gz|/tmp/kubeconform.tar.gz|' \
+            | sha256sum -c
+          tar xz -C /tmp -f /tmp/kubeconform.tar.gz
           sudo mv /tmp/kubeconform /usr/local/bin/
 
       - name: Lint and validate charts
@@ -58,9 +65,16 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Install kubeconform
+        env:
+          VERSION: v0.6.7
         run: |
-          curl -sfL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz \
-            | tar xz -C /tmp
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o /tmp/kubeconform.tar.gz
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/CHECKSUMS" \
+            | grep linux-amd64.tar.gz \
+            | sed 's|kubeconform-linux-amd64.tar.gz|/tmp/kubeconform.tar.gz|' \
+            | sha256sum -c
+          tar xz -C /tmp -f /tmp/kubeconform.tar.gz
           sudo mv /tmp/kubeconform /usr/local/bin/
 
       - name: Validate ArgoCD manifests

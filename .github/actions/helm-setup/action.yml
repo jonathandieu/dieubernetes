@@ -8,4 +8,7 @@ runs:
 
     - name: Configure Docker for OCI
       shell: bash
-      run: mkdir -p ~/.docker && [ -f ~/.docker/config.json ] || echo '{}' > ~/.docker/config.json
+      run: |
+        if [ ! -f ~/.docker/config.json ]; then
+          mkdir -p ~/.docker && echo '{}' > ~/.docker/config.json
+        fi
