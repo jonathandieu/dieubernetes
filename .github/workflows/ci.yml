@@ -122,17 +122,15 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Format diff comment
-        id: comment
         run: |
           result="${{ steps.diff.outputs.result }}"
           if [ "$result" = "No template changes detected." ]; then
-            body="## Helm template diff\n\nNo template changes detected."
+            printf '## Helm template diff\n\nNo template changes detected.\n' > /tmp/diff-comment.md
           else
-            body="## Helm template diff\n\n\`\`\`diff\n${result}\n\`\`\`"
+            printf '## Helm template diff\n\n```diff\n%s\n```\n' "$result" > /tmp/diff-comment.md
           fi
-          echo "body=$body" >> "$GITHUB_OUTPUT"
 
       - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
         with:
-          message: ${{ steps.comment.outputs.body }}
+          file-path: /tmp/diff-comment.md
           comment-tag: helm-diff
