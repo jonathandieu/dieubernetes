@@ -1,0 +1,150 @@
+name: CI
+on:
+  pull_request:
+    paths:
+      - 'charts/**'
+      - 'argocd/**'
+      - '.github/workflows/ci.yml'
+      - '.github/actions/**'
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: ./.github/actions/helm-setup
+
+      - name: Install kubeconform
+        env:
+          VERSION: v0.6.7
+        run: |
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o /tmp/kubeconform.tar.gz
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/CHECKSUMS" \
+            | grep linux-amd64.tar.gz \
+            | sed 's|kubeconform-linux-amd64.tar.gz|/tmp/kubeconform.tar.gz|' \
+            | sha256sum -c
+          tar xz -C /tmp -f /tmp/kubeconform.tar.gz
+          sudo mv /tmp/kubeconform /usr/local/bin/
+
+      - name: Lint and validate charts
+        run: |
+          set -eo pipefail
+          for chart in charts/*/*; do
+            [ -f "$chart/Chart.yaml" ] || continue
+            echo "--- $chart ---"
+
+            lock_before=""
+            [ -f "$chart/Chart.lock" ] && lock_before=$(sha256sum "$chart/Chart.lock" | cut -d' ' -f1)
+
+            helm dependency update "$chart" --skip-refresh 2>/dev/null \
+              || helm dependency update "$chart"
+
+            if [ -n "$lock_before" ]; then
+              lock_after=$(sha256sum "$chart/Chart.lock" | cut -d' ' -f1)
+              if [ "$lock_before" != "$lock_after" ]; then
+                echo "::error::Chart.lock drifted for $chart — run 'helm dependency update' locally and commit the result"
+                exit 1
+              fi
+            fi
+
+            helm lint "$chart"
+            helm template release "$chart" \
+              | kubeconform -strict \
+                  -kubernetes-version 1.36.0 \
+                  -schema-location default \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -skip CustomResourceDefinition \
+                  -summary
+          done
+
+  argocd-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Install kubeconform
+        env:
+          VERSION: v0.6.7
+        run: |
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/kubeconform-linux-amd64.tar.gz" \
+            -o /tmp/kubeconform.tar.gz
+          curl -sfL "https://github.com/yannh/kubeconform/releases/download/${VERSION}/CHECKSUMS" \
+            | grep linux-amd64.tar.gz \
+            | sed 's|kubeconform-linux-amd64.tar.gz|/tmp/kubeconform.tar.gz|' \
+            | sha256sum -c
+          tar xz -C /tmp -f /tmp/kubeconform.tar.gz
+          sudo mv /tmp/kubeconform /usr/local/bin/
+
+      - name: Validate ArgoCD manifests
+        run: |
+          find argocd -name '*.yaml' -print0 \
+            | xargs -0 -r kubeconform -strict \
+                -kubernetes-version 1.36.0 \
+                -schema-location default \
+                -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                -skip CustomResourceDefinition \
+                -summary
+
+  helm-diff:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          path: head
+
+      - uses: ./head/.github/actions/helm-setup
+
+      - name: Render templates
+        run: |
+          mkdir -p /tmp/base /tmp/head
+          for dir in base head; do
+            for chart in $dir/charts/*/*; do
+              [ -f "$chart/Chart.yaml" ] || continue
+              name=$(basename "$chart")
+              helm dependency update "$chart" --skip-refresh 2>/dev/null \
+                || helm dependency update "$chart" 2>/dev/null \
+                || true
+              if ! helm template release "$chart" > /tmp/$dir/$name.yaml 2>&1; then
+                echo "# helm template failed for $chart" > /tmp/$dir/$name.yaml
+              fi
+            done
+          done
+
+      - name: Diff templates
+        id: diff
+        run: |
+          output=$(diff -u --recursive --label base --label head /tmp/base /tmp/head 2>/dev/null || true)
+          if [ -z "$output" ]; then
+            output="No template changes detected."
+          else
+            output=$(echo "$output" | head -c 60000)
+          fi
+          {
+            echo 'result<<DIFF_EOF'
+            echo "$output"
+            echo 'DIFF_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Format diff comment
+        run: |
+          result="${{ steps.diff.outputs.result }}"
+          if [ "$result" = "No template changes detected." ]; then
+            printf '## Helm template diff\n\nNo template changes detected.\n' > /tmp/diff-comment.md
+          else
+            printf '## Helm template diff\n\n```diff\n%s\n```\n' "$result" > /tmp/diff-comment.md
+          fi
+
+      - uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b # v3.0.1
+        with:
+          file-path: /tmp/diff-comment.md
+          comment-tag: helm-diff
