@@ -22,8 +22,8 @@ runs:
           i=$((i+1))
         done < <(
           find . -name "Chart.yaml" \
-            | xargs yq '.dependencies[].repository // empty' 2>/dev/null \
-            | grep -v '^oci://' \
+            | xargs yq '.dependencies[]?.repository | select(. != null)' 2>/dev/null \
+            | grep -E '^https?://' \
             | sort -u
         )
         helm repo update
