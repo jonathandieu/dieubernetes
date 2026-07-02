@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  purpose: platform
+          - list:
+              elements:
+                - app: kargo
+                  namespace: kargo
+                  wave: "0"
+                - app: kargo-pipelines
+                  namespace: kargo
+                  wave: "1"
+  template:
+    metadata:
+      name: "{{ .app }}-{{ .name }}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          ref: values
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          path: "charts/platform/{{ .app }}"
+          helm:
+            valueFiles:
+              - values.yaml
+              - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

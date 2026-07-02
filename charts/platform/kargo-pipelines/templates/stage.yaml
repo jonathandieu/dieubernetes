@@ -1,0 +1,70 @@
+{{- range $envName, $env := .Values.environments }}
+{{- range $.Values.apps }}
+{{- $app := . }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Stage
+metadata:
+  name: {{ $app.name }}-{{ $envName }}
+  namespace: kargo
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: {{ $app.name }}
+      sources:
+        {{- if eq $envName "stage" }}
+        direct: true
+        {{- else }}
+        # prod only receives freight verified by all stage clusters
+        stages:
+          {{- range $.Values.environments.stage.clusters }}
+          - {{ $app.name }}-stage
+          {{- end }}
+        {{- end }}
+  promotionTemplate:
+    spec:
+      steps:
+        - uses: git-clone
+          config:
+            repoURL: {{ $.Values.git.repoURL }}
+            checkout:
+              - branch: {{ $.Values.git.branch }}
+                path: ./repo
+
+        # Update image tag in every cluster override file for this environment.
+        # When a new cluster is added to environments.{{ $envName }}.clusters,
+        # its override file is automatically included here on next ArgoCD sync.
+        {{- range $env.clusters }}
+        - uses: git-update-image
+          as: update-{{ . }}
+          config:
+            path: ./repo
+            images:
+              - image: {{ $app.imageRepo }}
+                fromFreight: true
+                updates:
+                  - file: clusters/{{ . }}/overrides/{{ $app.name }}.yaml
+                    key: "{{ $app.name }}.image.tag"
+        {{- end }}
+
+        - uses: git-commit
+          config:
+            path: ./repo
+            message: "chore(kargo): promote {{ $app.name }} to {{ $envName }}"
+
+        - uses: git-push
+          config:
+            path: ./repo
+
+        # Trigger ArgoCD sync for every cluster in this environment
+        {{- range $env.clusters }}
+        - uses: argocd-update
+          config:
+            apps:
+              - name: {{ $app.name }}-{{ . }}
+                sources:
+                  - desiredCommitFromStep: git-push
+        {{- end }}
+{{- end }}
+{{- end }}

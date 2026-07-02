@@ -1,0 +1,31 @@
+# environments lists which clusters belong to each Kargo Stage.
+# `dieuctl cluster create --environment stage` appends to the stage list.
+# `dieuctl cluster destroy` removes the cluster from its environment list.
+# ArgoCD syncs the updated Kargo Stage definitions automatically.
+environments:
+  stage:
+    clusters:
+      - dieubernetes-do-stage-nyc3
+  prod:
+    clusters:
+      - dieubernetes-do-main-nyc3
+
+# apps lists every workload app that goes through the Kargo pipeline.
+# Each app gets one Warehouse + one Stage per environment.
+apps:
+  - name: portfolio
+    imageRepo: ghcr.io/jonathandieu/portfolio
+  - name: api
+    imageRepo: ghcr.io/jonathandieu/api
+  - name: overengineered
+    imageRepo: ghcr.io/jonathandieu/overengineered
+  - name: mealie
+    imageRepo: ghcr.io/mealie-recipes/mealie
+  - name: plausible
+    imageRepo: ghcr.io/plausible/analytics
+  - name: changedetection
+    imageRepo: ghcr.io/dgtlmoon/changedetection.io
+
+git:
+  repoURL: https://github.com/jonathandieu/dieubernetes
+  branch: main

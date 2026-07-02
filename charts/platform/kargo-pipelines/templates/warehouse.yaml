@@ -1,0 +1,14 @@
+{{- range .Values.apps }}
+---
+apiVersion: kargo.akuity.io/v1alpha1
+kind: Warehouse
+metadata:
+  name: {{ .name }}
+  namespace: kargo
+spec:
+  subscriptions:
+    - image:
+        repoURL: {{ .imageRepo }}
+        semverConstraint: ">=0.0.0"
+        discoveryLimit: 5
+{{- end }}
