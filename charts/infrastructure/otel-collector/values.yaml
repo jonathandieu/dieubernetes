@@ -1,65 +1,66 @@
-mode: deployment
-replicaCount: 1
+opentelemetry-collector:
+  mode: deployment
+  replicaCount: 1
 
-image:
-  repository: otel/opentelemetry-collector-contrib
+  image:
+    repository: otel/opentelemetry-collector-contrib
 
-ports:
-  otlp:
-    enabled: false
-  otlp-http:
-    enabled: false
-  jaeger-compact:
-    enabled: false
-  jaeger-thrift:
-    enabled: false
-  jaeger-grpc:
-    enabled: false
-  zipkin:
-    enabled: false
+  ports:
+    otlp:
+      enabled: false
+    otlp-http:
+      enabled: false
+    jaeger-compact:
+      enabled: false
+    jaeger-thrift:
+      enabled: false
+    jaeger-grpc:
+      enabled: false
+    zipkin:
+      enabled: false
 
-extraEnvsFrom:
-  - secretRef:
-      name: grafana-cloud-credentials
+  extraEnvsFrom:
+    - secretRef:
+        name: grafana-cloud-otlp-credentials
 
-config:
-  receivers:
-    prometheus:
-      config:
-        scrape_configs:
-          - job_name: federate
-            scrape_interval: 30s
-            honor_labels: true
-            metrics_path: /federate
-            params:
-              match[]:
-                - '{__name__=~"up|kube_pod_status_phase|container_oom_events_total|node_memory_MemAvailable_bytes|node_memory_MemTotal_bytes|apiserver_request_total"}'
-            static_configs:
-              - targets:
-                  - kube-prometheus-stack-prometheus.monitoring.svc:9090
-    jaeger: null
-    otlp: null
-    zipkin: null
+  config:
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: federate
+              scrape_interval: 30s
+              honor_labels: true
+              metrics_path: /federate
+              params:
+                match[]:
+                  - '{__name__=~"up|kube_pod_status_phase|container_oom_events_total|node_memory_MemAvailable_bytes|node_memory_MemTotal_bytes|apiserver_request_total"}'
+              static_configs:
+                - targets:
+                    - kube-prometheus-stack-prometheus.monitoring.svc:9090
+      jaeger: null
+      otlp: null
+      zipkin: null
 
-  extensions:
-    basicauth/grafana_cloud:
-      client_auth:
-        username: ${env:username}
-        password: ${env:password}
+    extensions:
+      basicauth/grafana_cloud:
+        client_auth:
+          username: "1702057"  # Grafana Cloud instance ID, not a secret
+          password: ${env:password}
 
-  exporters:
-    debug: null
-    otlphttp/grafana_cloud:
-      endpoint: ""  # TODO: set to your Grafana Cloud OTLP gateway, e.g. https://otlp-gateway-prod-us-east-3.grafana.net/otlp
-      auth:
-        authenticator: basicauth/grafana_cloud
+    exporters:
+      debug: null
+      otlphttp/grafana_cloud:
+        endpoint: "https://otlp-gateway-prod-us-east-3.grafana.net/otlp"
+        auth:
+          authenticator: basicauth/grafana_cloud
 
-  service:
-    extensions: [health_check, basicauth/grafana_cloud]
-    pipelines:
-      metrics:
-        receivers: [prometheus]
-        processors: [batch, memory_limiter]
-        exporters: [otlphttp/grafana_cloud]
-      traces: null
-      logs: null
+    service:
+      extensions: [health_check, basicauth/grafana_cloud]
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [batch, memory_limiter]
+          exporters: [otlphttp/grafana_cloud]
+        traces: null
+        logs: null
