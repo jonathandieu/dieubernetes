@@ -1,0 +1,9 @@
+plausible-analytics:  # 8gears/plausible-analytics
+  image:
+    tag: ""  # managed by Kargo
+
+  ingress:
+    enabled: false  # routing via Envoy Gateway HTTPRoute
+
+  baseURL: "https://analytics.dieu.dev"
+  disableRegistration: true

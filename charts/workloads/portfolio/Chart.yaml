@@ -1,0 +1,4 @@
+apiVersion: v2
+name: portfolio
+description: Personal portfolio site — dieu.dev
+version: 0.1.0

@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: workloads
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: purpose, operator: In, values: [prod, stage]}
+          - list:
+              elements:
+                - app: portfolio
+                  namespace: portfolio
+                  wave: "0"
+                - app: api
+                  namespace: api
+                  wave: "0"
+                - app: overengineered
+                  namespace: overengineered
+                  wave: "0"
+                - app: mealie
+                  namespace: mealie
+                  wave: "0"
+                - app: plausible
+                  namespace: plausible
+                  wave: "0"
+                - app: changedetection
+                  namespace: changedetection
+                  wave: "0"
+  template:
+    metadata:
+      name: "{{ .app }}-{{ .name }}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          ref: values
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          path: "charts/workloads/{{ .app }}"
+          helm:
+            valueFiles:
+              - values.yaml
+              - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

@@ -1,0 +1,8 @@
+image:
+  repository: ghcr.io/jonathandieu/portfolio
+  tag: latest
+
+httproute:
+  hostnames:
+    - dieu.dev
+    - www.dieu.dev
