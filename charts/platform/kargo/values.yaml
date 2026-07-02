@@ -1,0 +1,9 @@
+kargo:
+  api:
+    adminAccount:
+      enabled: true
+    secret:
+      name: kargo-admin-credentials  # created by templates/kargo-admin-secret.yaml, sourced from the "Kargo Admin" 1Password item
+  argocd:
+    integrationEnabled: true
+    namespace: argocd
