@@ -2,7 +2,8 @@ kargo:
   api:
     adminAccount:
       enabled: true
-      # password hash set via ExternalSecret → kargo-admin-credentials
+    secret:
+      name: kargo-admin-credentials  # created by templates/kargo-admin-secret.yaml, sourced from the "Kargo Admin" 1Password item
   argocd:
     integrationEnabled: true
     namespace: argocd
