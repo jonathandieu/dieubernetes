@@ -1,0 +1,4 @@
+apiVersion: v2
+name: overengineered
+description: overengineered.dieu.dev — live cluster dashboard + architecture explainer
+version: 0.1.0

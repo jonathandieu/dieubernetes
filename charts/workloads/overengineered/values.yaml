@@ -1,0 +1,11 @@
+image:
+  repository: ghcr.io/jonathandieu/overengineered
+  tag: latest
+
+httproute:
+  hostnames:
+    - overengineered.dieu.dev
+
+# status.dieu.dev is a Cloudflare Worker — configured at deploy time, not here
+env:
+  STATUS_API_URL: "https://status.dieu.dev"

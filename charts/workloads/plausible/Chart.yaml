@@ -1,0 +1,7 @@
+apiVersion: v2
+name: plausible
+version: 0.1.0
+dependencies:
+  - name: plausible-analytics
+    version: "0.4.2"
+    repository: https://imio.github.io/helm-charts
