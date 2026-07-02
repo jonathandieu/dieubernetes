@@ -4,4 +4,4 @@ version: 0.1.0
 dependencies:
   - name: plausible-analytics
     version: "0.4.2"
-    repository: https://8gears.container-registry.com/chartrepo/library
+    repository: https://imio.github.io/helm-charts
