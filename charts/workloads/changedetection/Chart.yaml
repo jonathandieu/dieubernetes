@@ -1,0 +1,4 @@
+apiVersion: v2
+name: changedetection
+description: changedetection.io — website change monitoring (custom chart, no official upstream)
+version: 0.1.0
