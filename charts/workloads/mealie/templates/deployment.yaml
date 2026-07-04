@@ -4,6 +4,8 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   replicas: {{ .Values.replicas }}
+  strategy:
+    type: Recreate  # single instance, PVC can't be multi-attached
   selector:
     matchLabels:
       app: {{ .Release.Name }}
@@ -14,7 +16,7 @@ spec:
     spec:
       containers:
         - name: mealie
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
           ports:
             - containerPort: 9000
           env:

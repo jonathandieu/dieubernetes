@@ -38,6 +38,7 @@ spec:
           targetRevision: HEAD
           path: "charts/workloads/{{ .app }}"
           helm:
+            releaseName: "{{ .app }}"
             valueFiles:
               - values.yaml
               - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"

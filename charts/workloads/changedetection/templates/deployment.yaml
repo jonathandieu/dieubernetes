@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: changedetection
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
           ports:
             - containerPort: 5000
           resources:
