@@ -1,4 +1,0 @@
-apiVersion: v2
-name: api
-description: api.dieu.dev — portfolio content API (projects, work history)
-version: 0.1.0

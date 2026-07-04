@@ -1,7 +1,0 @@
-image:
-  repository: ghcr.io/jonathandieu/api
-  tag: latest
-
-httproute:
-  hostnames:
-    - api.dieu.dev

@@ -14,15 +14,6 @@ spec:
                   - {key: purpose, operator: In, values: [prod, stage]}
           - list:
               elements:
-                - app: portfolio
-                  namespace: portfolio
-                  wave: "0"
-                - app: api
-                  namespace: api
-                  wave: "0"
-                - app: overengineered
-                  namespace: overengineered
-                  wave: "0"
                 - app: mealie
                   namespace: mealie
                   wave: "0"
