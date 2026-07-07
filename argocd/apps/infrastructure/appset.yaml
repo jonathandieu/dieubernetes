@@ -13,6 +13,8 @@ spec:
               elements:
                 - app: kube-prometheus-stack
                   namespace: monitoring
+                - app: otel-collector
+                  namespace: monitoring
                 - app: metrics-server
                   namespace: kube-system
                 - app: cert-manager

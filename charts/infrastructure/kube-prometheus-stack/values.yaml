@@ -1,18 +1,18 @@
 kube-prometheus-stack:
   grafana:
-    enabled: false  # using Grafana Cloud
+    enabled: false  # using Grafana Cloud UI with self-hosted Prometheus as external datasource
 
   prometheus:
     prometheusSpec:
-      remoteWrite:
-        - url: https://prometheus-prod-66-prod-us-east-3.grafana.net/api/prom/push
-          basicAuth:
-            username:
-              name: grafana-cloud-credentials
-              key: username
-            password:
-              name: grafana-cloud-credentials
-              key: password
+      retention: 30d
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: do-block-storage
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 20Gi
 
   alertmanager:
     enabled: false
