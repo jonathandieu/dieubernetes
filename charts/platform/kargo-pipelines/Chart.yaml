@@ -1,0 +1,4 @@
+apiVersion: v2
+name: kargo-pipelines
+description: Kargo Warehouses and Stages for all workload apps
+version: 0.1.0
