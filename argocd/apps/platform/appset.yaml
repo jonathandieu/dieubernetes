@@ -35,6 +35,7 @@ spec:
           targetRevision: HEAD
           path: "charts/platform/{{ .app }}"
           helm:
+            releaseName: "{{ .app }}"
             valueFiles:
               - values.yaml
               - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
@@ -49,3 +50,4 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true

@@ -1,30 +1,33 @@
-# environments lists which clusters belong to each Kargo Stage.
+# environments lists which clusters belong to each Kargo Stage, using the
+# short cluster name ArgoCD's cluster secret uses (matches the
+# clusters/<name>/overrides/ directories the workloads appset reads from —
+# not the full dieubernetes-{tier}-{provider}-{region} workspace name).
 # `dieuctl cluster create --environment stage` appends to the stage list.
 # `dieuctl cluster destroy` removes the cluster from its environment list.
 # ArgoCD syncs the updated Kargo Stage definitions automatically.
 environments:
   stage:
     clusters:
-      - dieubernetes-do-stage-nyc3
+      - stage-do-atl1
   prod:
     clusters:
-      - dieubernetes-do-main-nyc3
+      - prod-do-atl1
 
-# apps lists every workload app that goes through the Kargo pipeline.
-# Each app gets one Warehouse + one Stage per environment.
+# apps lists every workload app that goes through the Kargo pipeline — each
+# must have a real chart under charts/workloads/. imageValueKey is the path
+# to the image tag in that chart's own values (relative to the chart root,
+# since override files are merged directly as the chart's values) — it
+# varies for umbrella charts that wrap an aliased subchart.
 apps:
-  - name: portfolio
-    imageRepo: ghcr.io/jonathandieu/portfolio
-  - name: api
-    imageRepo: ghcr.io/jonathandieu/api
-  - name: overengineered
-    imageRepo: ghcr.io/jonathandieu/overengineered
   - name: mealie
     imageRepo: ghcr.io/mealie-recipes/mealie
+    imageValueKey: image.tag
   - name: plausible
-    imageRepo: ghcr.io/plausible/analytics
+    imageRepo: ghcr.io/plausible/community-edition
+    imageValueKey: plausible-analytics.image.tag
   - name: changedetection
     imageRepo: ghcr.io/dgtlmoon/changedetection.io
+    imageValueKey: image.tag
 
 git:
   repoURL: https://github.com/jonathandieu/dieubernetes

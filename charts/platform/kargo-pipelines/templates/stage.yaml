@@ -6,7 +6,7 @@ apiVersion: kargo.akuity.io/v1alpha1
 kind: Stage
 metadata:
   name: {{ $app.name }}-{{ $envName }}
-  namespace: kargo
+  namespace: {{ $.Release.Namespace }}
 spec:
   requestedFreight:
     - origin:
@@ -16,11 +16,11 @@ spec:
         {{- if eq $envName "stage" }}
         direct: true
         {{- else }}
-        # prod only receives freight verified by all stage clusters
+        # prod only receives freight already verified in stage — one Stage
+        # per environment, not per cluster, so this is a single reference
+        # regardless of how many clusters are in the stage environment.
         stages:
-          {{- range $.Values.environments.stage.clusters }}
           - {{ $app.name }}-stage
-          {{- end }}
         {{- end }}
   promotionTemplate:
     spec:
@@ -45,7 +45,7 @@ spec:
                 fromFreight: true
                 updates:
                   - file: clusters/{{ . }}/overrides/{{ $app.name }}.yaml
-                    key: "{{ $app.name }}.image.tag"
+                    key: "{{ $app.imageValueKey }}"
         {{- end }}
 
         - uses: git-commit
