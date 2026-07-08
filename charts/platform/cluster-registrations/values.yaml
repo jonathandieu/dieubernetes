@@ -1,0 +1,15 @@
+# clusters lists every non-platform cluster registered with this ArgoCD
+# instance. Each entry's onePasswordItem is the item created by terraform's
+# argocd-manager ServiceAccount output and pushed by `dieuctl argocd
+# register` — it holds a "config" field: the precomputed ArgoCD
+# cluster-secret JSON blob (bearerToken + tlsClientConfig.caData) for a
+# dedicated, revocable identity (see terraform ADR 0003), not the cluster's
+# own admin credential.
+#
+# name/server are not secret (a stable short name and public API endpoint),
+# so they're set here directly rather than round-tripped through 1Password.
+clusters:
+  - name: stage-do-atl1
+    purpose: stage
+    server: https://5890bc94-cae8-45a0-bf86-8475582504e4.k8s.ondigitalocean.com
+    onePasswordItem: ykdfuehhs2kzndcwwxczjh47le
