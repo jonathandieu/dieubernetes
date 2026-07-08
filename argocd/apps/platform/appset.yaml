@@ -12,8 +12,12 @@ spec:
               selector:
                 matchLabels:
                   purpose: platform
+                  argocd-active: "true"
           - list:
               elements:
+                - app: cluster-registrations
+                  namespace: argocd
+                  wave: "0"
                 - app: kargo
                   namespace: kargo
                   wave: "0"
