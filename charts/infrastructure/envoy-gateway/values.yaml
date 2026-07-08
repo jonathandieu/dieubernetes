@@ -11,12 +11,15 @@ gateway-helm:
           envoyService:
             annotations: {}
 
-  # Deploy the default GatewayClass so HTTPRoutes can reference it
-  gatewayClass:
-    create: true
-    name: envoy-gateway
-
   metrics:
     enabled: true
     serviceMonitor:
       enabled: true
+
+# gateway-helm only installs the controller and CRDs, not a GatewayClass or
+# Gateway (see templates/gatewayclass.yaml and templates/gateway.yaml in
+# this chart) - these are our own top-level values, not passed to the
+# subchart.
+gatewayClass:
+  create: true
+  name: envoy-gateway
