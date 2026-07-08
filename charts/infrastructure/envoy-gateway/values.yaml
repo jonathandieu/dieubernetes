@@ -23,3 +23,13 @@ gateway-helm:
 gatewayClass:
   create: true
   name: envoy-gateway
+  tls:
+    # Single wildcard cert covers every app subdomain without needing a
+    # new listener/cert per app. cert-manager's Gateway API support
+    # (cert-manager.io/cluster-issuer annotation, requires
+    # cert-manager's own config.enableGatewayAPI - set in
+    # charts/infrastructure/cert-manager) derives the cert's dnsNames
+    # from this hostname automatically.
+    hostname: "*.dieu.dev"
+    secretName: envoy-gateway-wildcard-tls
+    clusterIssuer: selfsigned

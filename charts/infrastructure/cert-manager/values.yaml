@@ -1,6 +1,12 @@
 cert-manager:
   crds:
     enabled: true
+  # Required for cert-manager to watch Gateway API Gateways and auto-issue
+  # certificates for annotated ones (see charts/infrastructure/envoy-gateway's
+  # Gateway) - off by default, this key is real (verified against the
+  # chart's own values.yaml, commented out under `config:` there).
+  config:
+    enableGatewayAPI: true
   prometheus:
     enabled: true
     servicemonitor:

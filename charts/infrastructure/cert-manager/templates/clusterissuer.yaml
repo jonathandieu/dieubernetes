@@ -1,0 +1,10 @@
+# A self-signed issuer, not a publicly-trusted one. Sufficient for the
+# dieu.dev zone's current Cloudflare SSL mode (Full: any cert at origin,
+# unvalidated). Would need a Cloudflare Origin CA or Let's Encrypt DNS-01
+# issuer instead if the zone is ever switched to Full (strict).
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
