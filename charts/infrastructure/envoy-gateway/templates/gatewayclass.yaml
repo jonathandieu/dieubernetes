@@ -9,4 +9,9 @@ metadata:
   name: {{ .Values.gatewayClass.name }}
 spec:
   controllerName: {{ index .Values "gateway-helm" "config" "envoyGateway" "gateway" "controllerName" }}
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: {{ .Values.gatewayClass.name }}
+    namespace: {{ .Release.Namespace }}
 {{- end }}

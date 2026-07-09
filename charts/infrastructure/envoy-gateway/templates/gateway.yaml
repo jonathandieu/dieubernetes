@@ -1,8 +1,9 @@
 {{- if .Values.gatewayClass.create }}
 # The Service (and adopted DO load balancer) Envoy Gateway provisions for
-# this Gateway gets its annotations from gateway-helm's own
-# config.envoyGateway.provider.kubernetes.envoyService.annotations - set
-# per-cluster in clusters/<name>/overrides/envoy-gateway.yaml.
+# this Gateway gets its annotations from the EnvoyProxy resource
+# (templates/envoyproxy.yaml) referenced via this GatewayClass's
+# parametersRef - set per-cluster in
+# clusters/<name>/overrides/envoy-gateway.yaml.
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
