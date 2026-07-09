@@ -1,0 +1,12 @@
+{{- if .Values.gatewayClass.create }}
+# The gateway-helm chart only installs the Envoy Gateway controller and CRDs -
+# it deliberately does not create a GatewayClass or Gateway itself (see
+# https://gateway.envoyproxy.io/docs/install/install-helm/, which has you
+# kubectl apply a separate quickstart.yaml for those). This is that step.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: {{ .Values.gatewayClass.name }}
+spec:
+  controllerName: {{ index .Values "gateway-helm" "config" "envoyGateway" "gateway" "controllerName" }}
+{{- end }}

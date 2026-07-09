@@ -1,0 +1,33 @@
+{{- if .Values.gatewayClass.create }}
+# The Service (and adopted DO load balancer) Envoy Gateway provisions for
+# this Gateway gets its annotations from gateway-helm's own
+# config.envoyGateway.provider.kubernetes.envoyService.annotations - set
+# per-cluster in clusters/<name>/overrides/envoy-gateway.yaml.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.gatewayClass.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.gatewayClass.tls.clusterIssuer }}
+spec:
+  gatewayClassName: {{ .Values.gatewayClass.name }}
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: {{ .Values.gatewayClass.tls.hostname | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ .Values.gatewayClass.tls.secretName }}
+      allowedRoutes:
+        namespaces:
+          from: All
+{{- end }}
