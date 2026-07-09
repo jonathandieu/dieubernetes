@@ -38,7 +38,15 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/kubeconform-cache
-          key: kubeconform-schemas-v1.36.0
+          # actions/cache is immutable per key - a fixed key would only ever
+          # capture whatever schemas the first run happened to need, and any
+          # later-added resource kind would hit the network forever without
+          # ever getting persisted. A per-run key plus a restore-keys prefix
+          # lets each run start from the most recent cache and save its own
+          # (possibly larger) snapshot forward.
+          key: kubeconform-schemas-v1.36.0-${{ github.run_id }}
+          restore-keys: |
+            kubeconform-schemas-v1.36.0-
 
       - name: Lint and validate charts
         run: |
@@ -95,7 +103,15 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: /tmp/kubeconform-cache
-          key: kubeconform-schemas-v1.36.0
+          # actions/cache is immutable per key - a fixed key would only ever
+          # capture whatever schemas the first run happened to need, and any
+          # later-added resource kind would hit the network forever without
+          # ever getting persisted. A per-run key plus a restore-keys prefix
+          # lets each run start from the most recent cache and save its own
+          # (possibly larger) snapshot forward.
+          key: kubeconform-schemas-v1.36.0-${{ github.run_id }}
+          restore-keys: |
+            kubeconform-schemas-v1.36.0-
 
       - name: Validate ArgoCD manifests
         run: |
