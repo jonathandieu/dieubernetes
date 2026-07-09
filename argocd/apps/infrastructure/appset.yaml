@@ -13,16 +13,31 @@ spec:
               elements:
                 - app: kube-prometheus-stack
                   namespace: monitoring
+                  skipCrds: false
                 - app: metrics-server
                   namespace: kube-system
+                  skipCrds: false
                 - app: cert-manager
                   namespace: cert-manager
+                  skipCrds: false
+                # gateway-helm's bundled CRDs are hardcoded to the
+                # "experimental" Gateway API channel with no values toggle
+                # to change that (verified against the chart - no condition
+                # on its crds subchart dependency). The dedicated
+                # gateway-api-crds appset already installs the canonical
+                # "standard" channel CRDs from upstream on every cluster,
+                # cloud-agnostic - gateway-helm's own copy only conflicts
+                # with it (Kubernetes' own Gateway API safe-upgrades policy
+                # rejects installing experimental on top of standard).
                 - app: envoy-gateway
                   namespace: envoy-gateway-system
+                  skipCrds: true
                 - app: external-dns
                   namespace: external-dns
+                  skipCrds: false
                 - app: external-secrets
                   namespace: external-secrets
+                  skipCrds: false
   template:
     metadata:
       name: "{{ .app }}-{{ .name }}"
@@ -39,6 +54,7 @@ spec:
           path: "charts/infrastructure/{{ .app }}"
           helm:
             releaseName: "{{ .app }}"
+            skipCrds: {{ .skipCrds }}
             valueFiles:
               - values.yaml
               - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
