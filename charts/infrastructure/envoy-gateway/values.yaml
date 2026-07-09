@@ -3,13 +3,6 @@ gateway-helm:
     envoyGateway:
       gateway:
         controllerName: gateway.envoyproxy.io/gatewayclass-controller
-      provider:
-        type: Kubernetes
-        kubernetes:
-          # DO load balancer ID is set per-cluster in clusters/{name}/overrides/envoy-gateway.yaml
-          # so the pre-provisioned LB is adopted rather than a new one being created.
-          envoyService:
-            annotations: {}
 
   metrics:
     enabled: true
@@ -23,6 +16,16 @@ gateway-helm:
 gatewayClass:
   create: true
   name: envoy-gateway
+  # DO load balancer ID is set per-cluster in
+  # clusters/{name}/overrides/envoy-gateway.yaml so the pre-provisioned LB
+  # is adopted rather than a new one being created. This has to go on an
+  # EnvoyProxy resource (templates/envoyproxy.yaml) referenced via the
+  # GatewayClass's parametersRef - the global EnvoyGateway config's
+  # provider.kubernetes.envoyService.annotations (what used to be here)
+  # is NOT applied to the per-Gateway Service at all, confirmed by
+  # testing: it silently created a brand new, untracked load balancer
+  # instead of adopting the real one on every cluster this was tried on.
+  envoyServiceAnnotations: {}
   tls:
     # Single wildcard cert covers every app subdomain without needing a
     # new listener/cert per app. cert-manager's Gateway API support
