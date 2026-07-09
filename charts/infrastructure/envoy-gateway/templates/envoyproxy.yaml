@@ -14,7 +14,5 @@ spec:
     kubernetes:
       envoyService:
         annotations:
-          {{- range $key, $value := .Values.gatewayClass.envoyServiceAnnotations }}
-          {{ $key }}: {{ $value | quote }}
-          {{- end }}
+          {{- .Values.gatewayClass.envoyServiceAnnotations | toYaml | nindent 10 }}
 {{- end }}
