@@ -28,6 +28,18 @@ jobs:
           tar xz -C /tmp -f /tmp/kubeconform.tar.gz
           sudo mv /tmp/kubeconform /usr/local/bin/
 
+      # -schema-location default isn't actually bundled/offline - it's a
+      # remote URL pattern (raw.githubusercontent.com/yannh/kubernetes-json-schema),
+      # fetched fresh per resource kind on every run with no caching. That's
+      # dozens of requests per CI run against a shared, heavily-used GitHub
+      # Actions IP range, which gets rate-limited (HTTP 429) often enough to
+      # be disruptive. -cache persists what's already been fetched.
+      - name: Cache kubeconform schemas
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /tmp/kubeconform-cache
+          key: kubeconform-schemas-v1.36.0
+
       - name: Lint and validate charts
         run: |
           set -eo pipefail
@@ -55,6 +67,7 @@ jobs:
                   -kubernetes-version 1.36.0 \
                   -schema-location default \
                   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -cache /tmp/kubeconform-cache \
                   -skip CustomResourceDefinition \
                   -summary
           done
@@ -77,6 +90,12 @@ jobs:
           tar xz -C /tmp -f /tmp/kubeconform.tar.gz
           sudo mv /tmp/kubeconform /usr/local/bin/
 
+      - name: Cache kubeconform schemas
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /tmp/kubeconform-cache
+          key: kubeconform-schemas-v1.36.0
+
       - name: Validate ArgoCD manifests
         run: |
           find argocd -name '*.yaml' -print0 \
@@ -84,6 +103,7 @@ jobs:
                 -kubernetes-version 1.36.0 \
                 -schema-location default \
                 -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                -cache /tmp/kubeconform-cache \
                 -skip CustomResourceDefinition \
                 -summary
 
