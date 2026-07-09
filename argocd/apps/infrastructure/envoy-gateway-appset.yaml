@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: envoy-gateway
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: "envoy-gateway-{{ .name }}"
+    spec:
+      project: default
+      sources:
+        # ref-only source: provides cluster-specific value overrides
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          ref: values
+        # chart source: umbrella chart with base values + optional cluster override
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          path: charts/infrastructure/envoy-gateway
+          helm:
+            releaseName: envoy-gateway
+            # gateway-helm's bundled CRDs are hardcoded to the "experimental"
+            # Gateway API channel with no values toggle to change that
+            # (verified against the chart - no condition on its crds
+            # subchart dependency to disable it either). The dedicated
+            # gateway-api-crds appset already installs the canonical
+            # "standard" channel CRDs from upstream on every cluster,
+            # cloud-agnostic - gateway-helm's own copy only conflicts with
+            # it (Kubernetes' own Gateway API safe-upgrades policy rejects
+            # installing experimental on top of standard). skipCrds can't
+            # be templated per-app in the shared infrastructure appset
+            # (ArgoCD ApplicationSet boolean fields can't be templated), so
+            # envoy-gateway gets its own appset instead of a list entry.
+            skipCrds: true
+            valueFiles:
+              - values.yaml
+              - "$values/clusters/{{ .name }}/overrides/envoy-gateway.yaml"
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: envoy-gateway-system
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true
+        retry:
+          limit: -1
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m
