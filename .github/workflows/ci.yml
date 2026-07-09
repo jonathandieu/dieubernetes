@@ -43,6 +43,7 @@ jobs:
       - name: Lint and validate charts
         run: |
           set -eo pipefail
+          mkdir -p /tmp/kubeconform-cache
           for chart in charts/*/*; do
             [ -f "$chart/Chart.yaml" ] || continue
             echo "--- $chart ---"
@@ -98,6 +99,7 @@ jobs:
 
       - name: Validate ArgoCD manifests
         run: |
+          mkdir -p /tmp/kubeconform-cache
           find argocd -name '*.yaml' -print0 \
             | xargs -0 -r kubeconform -strict \
                 -kubernetes-version 1.36.0 \
