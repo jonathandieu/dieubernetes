@@ -28,9 +28,30 @@ jobs:
           tar xz -C /tmp -f /tmp/kubeconform.tar.gz
           sudo mv /tmp/kubeconform /usr/local/bin/
 
+      # -schema-location default isn't actually bundled/offline - it's a
+      # remote URL pattern (raw.githubusercontent.com/yannh/kubernetes-json-schema),
+      # fetched fresh per resource kind on every run with no caching. That's
+      # dozens of requests per CI run against a shared, heavily-used GitHub
+      # Actions IP range, which gets rate-limited (HTTP 429) often enough to
+      # be disruptive. -cache persists what's already been fetched.
+      - name: Cache kubeconform schemas
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /tmp/kubeconform-cache
+          # actions/cache is immutable per key - a fixed key would only ever
+          # capture whatever schemas the first run happened to need, and any
+          # later-added resource kind would hit the network forever without
+          # ever getting persisted. A per-run key plus a restore-keys prefix
+          # lets each run start from the most recent cache and save its own
+          # (possibly larger) snapshot forward.
+          key: kubeconform-schemas-v1.36.0-${{ github.run_id }}
+          restore-keys: |
+            kubeconform-schemas-v1.36.0-
+
       - name: Lint and validate charts
         run: |
           set -eo pipefail
+          mkdir -p /tmp/kubeconform-cache
           for chart in charts/*/*; do
             [ -f "$chart/Chart.yaml" ] || continue
             echo "--- $chart ---"
@@ -55,6 +76,7 @@ jobs:
                   -kubernetes-version 1.36.0 \
                   -schema-location default \
                   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                  -cache /tmp/kubeconform-cache \
                   -skip CustomResourceDefinition \
                   -summary
           done
@@ -77,13 +99,29 @@ jobs:
           tar xz -C /tmp -f /tmp/kubeconform.tar.gz
           sudo mv /tmp/kubeconform /usr/local/bin/
 
+      - name: Cache kubeconform schemas
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: /tmp/kubeconform-cache
+          # actions/cache is immutable per key - a fixed key would only ever
+          # capture whatever schemas the first run happened to need, and any
+          # later-added resource kind would hit the network forever without
+          # ever getting persisted. A per-run key plus a restore-keys prefix
+          # lets each run start from the most recent cache and save its own
+          # (possibly larger) snapshot forward.
+          key: kubeconform-schemas-v1.36.0-${{ github.run_id }}
+          restore-keys: |
+            kubeconform-schemas-v1.36.0-
+
       - name: Validate ArgoCD manifests
         run: |
+          mkdir -p /tmp/kubeconform-cache
           find argocd -name '*.yaml' -print0 \
             | xargs -0 -r kubeconform -strict \
                 -kubernetes-version 1.36.0 \
                 -schema-location default \
                 -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                -cache /tmp/kubeconform-cache \
                 -skip CustomResourceDefinition \
                 -summary
 
