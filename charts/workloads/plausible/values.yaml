@@ -1,4 +1,4 @@
-plausible-analytics:  # 8gears/plausible-analytics
+plausible-analytics:  # imio/plausible-analytics
   image:
     tag: ""  # managed by Kargo
 
@@ -7,3 +7,25 @@ plausible-analytics:  # 8gears/plausible-analytics
 
   baseURL: "https://analytics.dieu.dev"
   disableRegistration: true
+
+  # DB connection URLs. The chart's defaults point at `plausible-analytics-*`
+  # hostnames, but our Helm release is named `plausible`, so the bundled
+  # subchart Services are `plausible-postgresql` and `plausible-clickhouse`.
+  # Only the host portion is wrong; the credentials match the subchart auth
+  # (postgres/postgres, clickhouse/password) set in the dependency defaults.
+  databaseURL: "postgres://postgres:postgres@plausible-postgresql:5432/plausible_db"
+  clickhouseDatabaseURL: "http://clickhouse:password@plausible-clickhouse:8123/plausible_events_db"
+
+  clickhouse:
+    # Bitnami's default resourcesPreset "small" caps ClickHouse at a 768Mi limit.
+    # ClickHouse sets its memory tracker to 90% of the cgroup limit (~691Mi),
+    # too little to run background merges and system-log flushes, so it
+    # OOM-crashloops (Code 241 MEMORY_LIMIT_EXCEEDED). The node has ~6.5Gi free.
+    resourcesPreset: "none"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "1"
+        memory: 2Gi
