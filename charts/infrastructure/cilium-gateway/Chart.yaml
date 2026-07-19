@@ -1,0 +1,4 @@
+apiVersion: v2
+name: cilium-gateway
+description: Cilium native Gateway API -- public ingress Gateway
+version: 0.1.0

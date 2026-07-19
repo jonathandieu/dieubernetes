@@ -1,0 +1,4 @@
+gateway:
+  create: true
+  lbAnnotations:
+    kubernetes.digitalocean.com/load-balancer-id: "f0f43b4a-d2cd-4f82-a4f1-4bebccd2b3ac"

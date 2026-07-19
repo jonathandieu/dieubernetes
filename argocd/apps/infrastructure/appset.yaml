@@ -17,8 +17,8 @@ spec:
                   namespace: kube-system
                 - app: cert-manager
                   namespace: cert-manager
-                - app: envoy-gateway
-                  namespace: envoy-gateway-system
+                - app: cilium-gateway
+                  namespace: cilium-gateway-system
                 - app: external-dns
                   namespace: external-dns
                 - app: external-secrets

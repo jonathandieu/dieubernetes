@@ -13,3 +13,5 @@ external-dns:
   policy: sync
   sources:
     - gateway-httproute
+  cloudflare:
+    proxied: true

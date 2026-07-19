@@ -1,0 +1,26 @@
+gatewayClass:
+  # DOKS 1.33+ manages the cilium GatewayClass automatically.
+  # Only set to true on clusters where it must be self-managed (e.g. EKS with Cilium).
+  create: false
+
+gateway:
+  # Off by default; enable per-cluster in clusters/<name>/overrides/cilium-gateway.yaml.
+  create: false
+  name: public
+  # Provider-specific annotations passed through to spec.infrastructure.annotations,
+  # which Cilium applies atomically at Service creation -- no CCM ordering race.
+  # DO example:  kubernetes.digitalocean.com/load-balancer-id: "<terraform output lb_id>"
+  # AWS example: service.beta.kubernetes.io/aws-load-balancer-type: external
+  #              service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+  #              service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+  lbAnnotations: {}
+  tls:
+    # Wildcard covers all app subdomains without a separate cert per listener.
+    # cert-manager's Gateway API support (cert-manager.io/cluster-issuer annotation)
+    # derives the Certificate from this hostname automatically.
+    hostname: "*.dieu.dev"
+    secretName: cilium-gateway-wildcard-tls
+    # Self-signed is sufficient: Cloudflare SSL mode "Full" validates only that a cert
+    # exists at the origin, not that it's publicly trusted. Switch to a Cloudflare
+    # Origin CA or Let's Encrypt DNS-01 issuer if the zone moves to "Full (strict)".
+    clusterIssuer: selfsigned
