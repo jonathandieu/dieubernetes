@@ -4,8 +4,8 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   parentRefs:
-    - name: envoy-gateway
-      namespace: envoy-gateway-system
+    - name: public
+      namespace: cilium-gateway-system
   hostnames:
     - analytics.dieu.dev
   rules:
