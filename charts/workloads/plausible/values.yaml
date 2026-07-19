@@ -20,7 +20,7 @@ plausible-analytics:  # imio/plausible-analytics
     # Bitnami's default resourcesPreset "small" caps ClickHouse at a 768Mi limit.
     # ClickHouse sets its memory tracker to 90% of the cgroup limit (~691Mi),
     # too little to run background merges and system-log flushes, so it
-    # OOM-crashloops (Code 241 MEMORY_LIMIT_EXCEEDED). The node has ~6.5Gi free.
+    # OOM-crashloops (Code 241 MEMORY_LIMIT_EXCEEDED).
     resourcesPreset: "none"
     resources:
       requests:
