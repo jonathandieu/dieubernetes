@@ -1,0 +1,18 @@
+{{- if .Values.gatewayClass.create }}
+# Per-Gateway Service customization (like the LB-adoption annotation) is
+# only honored via an EnvoyProxy resource referenced through the
+# GatewayClass's parametersRef (see templates/gatewayclass.yaml) - the
+# global EnvoyGateway config does not apply here, confirmed by testing.
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: {{ .Values.gatewayClass.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        annotations:
+          {{- .Values.gatewayClass.envoyServiceAnnotations | toYaml | nindent 10 }}
+{{- end }}
