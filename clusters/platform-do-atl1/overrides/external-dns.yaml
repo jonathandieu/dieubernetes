@@ -1,0 +1,5 @@
+# Unique owner-id per cluster. external-dns runs on every cluster against the
+# shared dieu.dev zone with policy=sync; a shared txtOwnerId made platform
+# delete the records stage created for its HTTPRoutes (see #34).
+external-dns:
+  txtOwnerId: dieubernetes-platform
