@@ -1,0 +1,27 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  parentRefs:
+    - name: public
+      namespace: cilium-gateway-system
+  hostnames:
+    - {{ .Values.httproute.hostname | quote }}
+  rules:
+    # /api/* -> the Go metrics API (longer prefix wins, so this takes precedence).
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api
+      backendRefs:
+        - name: {{ .Release.Name }}-api
+          port: {{ .Values.api.port }}
+    # everything else -> the static site.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: {{ .Release.Name }}-web
+          port: {{ .Values.web.port }}
