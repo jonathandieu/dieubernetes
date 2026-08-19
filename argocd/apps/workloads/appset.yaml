@@ -23,6 +23,9 @@ spec:
                 - app: changedetection
                   namespace: changedetection
                   wave: "0"
+                - app: dieu-dev
+                  namespace: dieu-dev
+                  wave: "0"
   template:
     metadata:
       name: "{{ .app }}-{{ .name }}"
