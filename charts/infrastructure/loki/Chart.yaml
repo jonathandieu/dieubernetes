@@ -1,0 +1,8 @@
+apiVersion: v2
+name: loki
+description: Self-hosted Loki (single-binary) backed by DO Spaces; log store for Grafana
+version: 0.1.0
+dependencies:
+  - name: loki
+    version: "7.3.0"
+    repository: https://grafana.github.io/helm-charts
