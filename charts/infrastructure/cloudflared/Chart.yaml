@@ -1,0 +1,5 @@
+apiVersion: v2
+name: cloudflared
+description: Cloudflare Tunnel connector; exposes in-cluster services without a public LB
+type: application
+version: 0.1.0

@@ -1,0 +1,8 @@
+apiVersion: v2
+name: authentik
+description: Self-hosted Authentik IdP (PoC on platform, exposed via a Cloudflare Tunnel)
+version: 0.1.0
+dependencies:
+  - name: authentik
+    version: "2026.8.0"
+    repository: https://charts.goauthentik.io

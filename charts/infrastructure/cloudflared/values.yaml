@@ -1,0 +1,24 @@
+image:
+  repository: cloudflare/cloudflared
+  # Pin to a released tag before production (cloudflared cuts frequent releases).
+  tag: latest
+
+# Two connectors for HA; both serve the same tunnel.
+replicas: 2
+
+# Token-based (remotely-managed) tunnel. The token is materialized from 1Password
+# by the ExternalSecret in this chart. Public-hostname routes (e.g.
+# auth.dieu.dev -> http://authentik-server.authentik:80) are configured in the
+# Cloudflare Zero Trust dashboard for this tunnel.
+tunnelSecretName: cloudflared-tunnel-token
+
+# 1Password item holding the tunnel token (field `credential`). Replace with the
+# real item UUID once created.
+onePasswordItem: REPLACE-WITH-TUNNEL-TOKEN-ITEM-UUID
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 128Mi
