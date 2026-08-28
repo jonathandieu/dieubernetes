@@ -24,6 +24,12 @@ spec:
                 - app: kargo-pipelines
                   namespace: kargo
                   wave: "1"
+                - app: authentik
+                  namespace: authentik
+                  wave: "1"
+                - app: cloudflared
+                  namespace: cloudflared
+                  wave: "2"
   template:
     metadata:
       name: "{{ .app }}-{{ .name }}"
