@@ -56,3 +56,10 @@ loki:
     enabled: false
   test:
     enabled: false
+
+# Top-level (consumed by this chart's own ExternalSecret template, not the subchart).
+externalSecret:
+  targetName: loki-spaces-credentials
+  # 1Password item holding the DO Spaces access key for the dieubernetes-loki bucket
+  # (fields: access_key_id, secret_access_key). Replace with the real item UUID.
+  onePasswordItem: REPLACE-WITH-LOKI-SPACES-CREDENTIALS-ITEM-UUID
