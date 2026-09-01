@@ -1,0 +1,17 @@
+# Self-hosted Grafana on platform only; stage stays on Grafana Cloud (base values).
+kube-prometheus-stack:
+  grafana:
+    enabled: true
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://kube-prometheus-stack-prometheus:9090
+            access: proxy
+            isDefault: true
+          - name: Loki
+            type: loki
+            url: http://loki-gateway.monitoring.svc.cluster.local
+            access: proxy

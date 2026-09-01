@@ -1,0 +1,35 @@
+opentelemetry-collector:
+  # DaemonSet so the filelog receiver can tail every node's container logs.
+  mode: daemonset
+  image:
+    # contrib distro includes filelog and otlphttp.
+    repository: otel/opentelemetry-collector-contrib
+
+  presets:
+    # Adds the filelog receiver (tails /var/log/pods) and the host mounts. Its
+    # default operators parse namespace/pod/container from the log path, so logs
+    # are already labelled for querying in Loki without a separate processor.
+    # (Richer k8sattributes enrichment - labels/annotations/node - is a follow-up;
+    # the kubernetesAttributes preset does not inject cleanly into an overridden
+    # pipeline in this chart version.)
+    logsCollection:
+      enabled: true
+      includeCollectorLogs: false
+
+  config:
+    exporters:
+      otlphttp/loki:
+        # self-hosted Loki, deployed alongside in the monitoring namespace.
+        logs_endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp/v1/logs
+    service:
+      pipelines:
+        logs:
+          exporters:
+            - otlphttp/loki
+
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      memory: 192Mi

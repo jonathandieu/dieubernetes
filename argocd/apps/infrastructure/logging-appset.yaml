@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: logging
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          # Scoped to platform only for now (proving the pipeline end-to-end before
+          # widening to stage). Widen this selector when ready to expand.
+          - clusters:
+              selector:
+                matchLabels:
+                  purpose: platform
+          - list:
+              elements:
+                - app: loki
+                  namespace: monitoring
+                  wave: "0"
+                - app: otel-collector
+                  namespace: monitoring
+                  wave: "1"
+  template:
+    metadata:
+      name: "{{ .app }}-{{ .name }}"
+      annotations:
+        argocd.argoproj.io/sync-wave: "{{ .wave }}"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          ref: values
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          path: "charts/infrastructure/{{ .app }}"
+          helm:
+            releaseName: "{{ .app }}"
+            valueFiles:
+              - values.yaml
+              - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true
