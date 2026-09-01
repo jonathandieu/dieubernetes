@@ -36,6 +36,14 @@ loki:
     extraEnvFrom:
       - secretRef:
           name: loki-spaces-credentials
+    # Chart default is `resources: {}` (unbounded); explicit limits here since this
+    # runs on a small, memory-constrained node alongside everything else.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
   write:
     replicas: 0
   read:
@@ -46,6 +54,12 @@ loki:
   # loki-gateway (nginx) fronts Loki; the otel-collector pushes to its /otlp path.
   gateway:
     enabled: true
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
 
   # Trim the footprint for a small cluster.
   chunksCache:
