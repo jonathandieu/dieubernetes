@@ -1,0 +1,21 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: alertmanager-slack-webhook
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    # Alertmanager reads this via alertmanagerSpec.secrets + api_url_file, must exist
+    # before Alertmanager starts.
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: ClusterSecretStore
+  target:
+    name: alertmanager-slack-webhook
+  data:
+    - secretKey: webhook-url
+      remoteRef:
+        key: {{ .Values.alertmanagerSlackWebhook.onePasswordItem }}/credential
