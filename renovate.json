@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^charts/workloads/plausible/values\\.yaml$"],
+      "matchStrings": ["tag:\\s*\"(?<currentValue>v[\\d.]+)\""],
+      "depNameTemplate": "ghcr.io/plausible/community-edition",
+      "datasourceTemplate": "docker"
+    }
+  ]
+}
