@@ -1,6 +1,10 @@
 plausible-analytics:  # imio/plausible-analytics
   image:
-    tag: ""  # managed by Kargo
+    # Empty string here falls back to the subchart's appVersion (3.0.1),
+    # but upstream's actual tags are v-prefixed (v3.0.1) -- the fallback
+    # silently resolved to a tag that doesn't exist on ghcr.io. Pin it
+    # explicitly until Kargo is actually wired up to manage this.
+    tag: "v3.0.1"
 
   ingress:
     enabled: false  # routing via Cilium Gateway HTTPRoute
