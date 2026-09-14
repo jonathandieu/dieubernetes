@@ -152,7 +152,21 @@ jobs:
               helm dependency update "$chart" --skip-refresh 2>/dev/null \
                 || helm dependency update "$chart" 2>/dev/null \
                 || true
-              if ! helm template release "$chart" > /tmp/$dir/$name.yaml 2>&1; then
+              # Redact Secret manifests before they ever touch disk. This diff
+              # gets posted to a public PR comment below -- rendered Secret
+              # data/stringData is base64, not encryption, and this job
+              # re-renders every chart (not just what a given PR touched), so
+              # any chart with a Secret template (including ones vendored
+              # from third-party subcharts, e.g. plausible-analytics) leaks
+              # real generated credentials on every run otherwise. Blank out
+              # data/stringData rather than dropping the whole document, so
+              # the diff still shows *that* a Secret's keys changed.
+              if out=$(helm template release "$chart" 2>/dev/null); then
+                echo "$out" | yq eval '
+                  (select(.kind == "Secret" and has("data")) | .data) |= with_entries(.value = "<redacted>") |
+                  (select(.kind == "Secret" and has("stringData")) | .stringData) |= with_entries(.value = "<redacted>")
+                ' - > /tmp/$dir/$name.yaml
+              else
                 echo "# helm template failed for $chart" > /tmp/$dir/$name.yaml
               fi
             done
