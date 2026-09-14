@@ -1,6 +1,14 @@
 plausible-analytics:  # imio/plausible-analytics
   image:
-    tag: ""  # managed by Kargo
+    # Explicit repository + tag (rather than relying on the subchart's own
+    # defaults) so Renovate's built-in helm-values manager can track this
+    # like every other chart's image block. The tag used to be an empty
+    # string with a "managed by Kargo" comment, but no Kargo Warehouse/Stage
+    # exists for this app -- the empty value fell back to the subchart's
+    # appVersion (3.0.1), and upstream's real tags are v-prefixed (v3.0.1),
+    # so it silently resolved to a tag that doesn't exist on ghcr.io.
+    repository: ghcr.io/plausible/community-edition
+    tag: "v3.0.1"
 
   ingress:
     enabled: false  # routing via Cilium Gateway HTTPRoute
