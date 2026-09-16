@@ -1,0 +1,48 @@
+{{/*
+Authentik needs Redis (cache + task broker) but the authentik chart bundles none.
+A small ephemeral Redis is enough for the PoC; authentik.redis.host points here.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authentik-redis
+  labels:
+    app.kubernetes.io/name: authentik-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: authentik-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: authentik-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          # cache/broker only, no persistence needed.
+          args: ["--save", "", "--appendonly", "no"]
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authentik-redis-master
+  labels:
+    app.kubernetes.io/name: authentik-redis
+spec:
+  selector:
+    app.kubernetes.io/name: authentik-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
