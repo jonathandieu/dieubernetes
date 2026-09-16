@@ -30,6 +30,16 @@ loki:
         # accessKeyId/secretAccessKey left null: the S3 client reads
         # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from the injected secret below.
 
+    # No retention config by default means keep everything forever. Cap it so the
+    # Spaces bucket doesn't grow unbounded -- 14d is plenty for a homelab-scale
+    # log volume and keeps storage cost near zero.
+    limits_config:
+      retention_period: 336h
+    compactor:
+      working_directory: /var/loki/compactor
+      retention_enabled: true
+      delete_request_store: s3
+
   # Single-binary Loki; the scalable components stay at zero.
   singleBinary:
     replicas: 1
