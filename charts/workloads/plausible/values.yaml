@@ -16,13 +16,11 @@ plausible-analytics:  # imio/plausible-analytics
   baseURL: "https://analytics.dieu.dev"
   disableRegistration: true
 
-  # DB connection URLs. The chart's defaults point at `plausible-analytics-*`
-  # hostnames, but our Helm release is named `plausible`, so the bundled
-  # subchart Services are `plausible-postgresql` and `plausible-clickhouse`.
-  # Only the host portion is wrong; the credentials match the subchart auth
-  # (postgres/postgres, clickhouse/password) set in the dependency defaults.
-  databaseURL: "postgres://postgres:postgres@plausible-postgresql:5432/plausible_db"
-  clickhouseDatabaseURL: "http://clickhouse:password@plausible-clickhouse:8123/plausible_events_db"
+  # Creds come from templates/externalsecret.yaml (1Password) now, not
+  # hardcoded/generated here.
+  secret:
+    create: false
+    existingSecret: "plausible-credentials"  # release name is "plausible"
 
   clickhouse:
     # Bitnami's default resourcesPreset "small" caps ClickHouse at a 768Mi limit.
