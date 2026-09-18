@@ -86,5 +86,7 @@ externalSecret:
   targetName: loki-spaces-credentials
   # 1Password item holding the DO Spaces access key for the dieubernetes-loki bucket
   # (fields: access_key_id, secret_access_key). Scoped to bucket=dieubernetes-loki,
-  # permission=readwrite only -- not the account-wide key terraform uses.
-  onePasswordItem: 2o4eqyt7vxx5b2hgcvosjf4hia
+  # permission=readwrite only -- not the account-wide key terraform uses. Must live
+  # in the "1Password" vault -- the onepassword ClusterSecretStore is scoped to that
+  # vault specifically, not "Private" (learned the hard way: item moved, new ID).
+  onePasswordItem: zijv5acsimmxx7ntu3vqp5mrzq
