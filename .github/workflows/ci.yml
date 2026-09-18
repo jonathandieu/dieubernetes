@@ -152,7 +152,21 @@ jobs:
               helm dependency update "$chart" --skip-refresh 2>/dev/null \
                 || helm dependency update "$chart" 2>/dev/null \
                 || true
-              if ! helm template release "$chart" > /tmp/$dir/$name.yaml 2>&1; then
+              # Redact Secret data before this gets posted to a public PR
+              # comment below. Keeps the key names so the diff is still useful.
+              # yq's own exit code is checked explicitly -- some charts render
+              # YAML yq can't fully round-trip (e.g. external-secrets' CRD
+              # descriptions), and that failure doesn't otherwise propagate,
+              # which would silently write a truncated file instead of erroring.
+              if out=$(helm template release "$chart" 2>/dev/null); then
+                if ! echo "$out" | yq eval '
+                  (select(.kind == "Secret" and has("data")) | .data) |= with_entries(.value = "<redacted>") |
+                  (select(.kind == "Secret" and has("stringData")) | .stringData) |= with_entries(.value = "<redacted>")
+                ' - > /tmp/$dir/$name.yaml 2>/tmp/$dir-$name-yq-err.txt; then
+                  echo "# redaction failed for $chart, see CI log" > /tmp/$dir/$name.yaml
+                  cat /tmp/$dir-$name-yq-err.txt
+                fi
+              else
                 echo "# helm template failed for $chart" > /tmp/$dir/$name.yaml
               fi
             done
