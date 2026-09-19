@@ -2,6 +2,16 @@
 kube-prometheus-stack:
   grafana:
     enabled: true
+    # The chart auto-provisions its own default Prometheus datasource
+    # ConfigMap (kube-prometheus-stack-grafana-datasource) separately from
+    # whatever's in grafana.datasources below. With both marked isDefault, the
+    # sidecar loads two "default" datasources and Grafana refuses to start:
+    # "Only one datasource per organization can be marked as default". Disable
+    # the chart's own one since our datasources block below already covers
+    # Prometheus (and Loki, which the chart doesn't know about at all).
+    sidecar:
+      datasources:
+        defaultDatasourceEnabled: false
     datasources:
       datasources.yaml:
         apiVersion: 1
