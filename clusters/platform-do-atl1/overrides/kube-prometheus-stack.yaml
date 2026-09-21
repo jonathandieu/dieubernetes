@@ -1,4 +1,7 @@
 # Self-hosted Grafana on platform only; stage stays on Grafana Cloud (base values).
+# Prometheus is already provisioned by the chart's sidecar
+# (grafana.sidecar.datasources.defaultDatasourceEnabled, isDefault: true).
+# This file only adds Loki, which the chart doesn't know about.
 kube-prometheus-stack:
   grafana:
     enabled: true
@@ -6,11 +9,6 @@ kube-prometheus-stack:
       datasources.yaml:
         apiVersion: 1
         datasources:
-          - name: Prometheus
-            type: prometheus
-            url: http://kube-prometheus-stack-prometheus:9090
-            access: proxy
-            isDefault: true
           - name: Loki
             type: loki
             url: http://loki-gateway.monitoring.svc.cluster.local
