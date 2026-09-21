@@ -1,6 +1,13 @@
 image:
   repository: ghcr.io/mealie-recipes/mealie
-  tag: ""  # managed by Kargo
+  # Was an empty string with a "managed by Kargo" comment, but no Kargo
+  # Warehouse/Stage exists for this app -- it silently fell back to
+  # whatever "latest" resolved to at pod creation, with no way to know
+  # what's actually running or roll back to it. Pinned to the exact
+  # version that was already running (verified by matching the running
+  # container's image digest against this tag's), so this is a no-op
+  # for the live pod, not an upgrade.
+  tag: "v3.22.0"
 
 replicas: 1
 
