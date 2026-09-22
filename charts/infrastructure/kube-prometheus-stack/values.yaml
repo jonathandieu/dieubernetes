@@ -68,4 +68,4 @@ kube-prometheus-stack:
 # 1Password item for the Slack Incoming Webhook URL (Alertmanager posts to #alerts).
 # This is a webhook, not an OAuth bot token, no app/scopes involved.
 alertmanagerSlackWebhook:
-  onePasswordItem: REPLACE-WITH-ALERTMANAGER-SLACK-WEBHOOK-ITEM-UUID
+  onePasswordItem: efhyibh2egltwfuaqwykuvfaly
