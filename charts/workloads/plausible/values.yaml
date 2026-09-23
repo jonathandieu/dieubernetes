@@ -24,6 +24,23 @@ plausible-analytics:  # imio/plausible-analytics
   databaseURL: "postgres://postgres:postgres@plausible-postgresql:5432/plausible_db"
   clickhouseDatabaseURL: "http://clickhouse:password@plausible-clickhouse:8123/plausible_events_db"
 
+  # containerd leaves nofile effectively unlimited (~2^30). BEAM sizes its
+  # port table from OPEN_MAX when ERL_MAX_PORTS is unset, so idle Plausible
+  # sits at ~2.4Gi RSS with no traffic. 1024 is enough for a personal
+  # analytics box; this is sockets/fds, not HTTP listen ports.
+  extraEnv:
+    - name: ERL_MAX_PORTS
+      value: "1024"
+
+  # After the port-table clamp, CE idles around 350-500Mi. Bound it so a
+  # future env-var regression can't eat the whole stage node again.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
   clickhouse:
     # Bitnami's default resourcesPreset "small" caps ClickHouse at a 768Mi limit.
     # ClickHouse sets its memory tracker to 90% of the cgroup limit (~691Mi),
