@@ -15,4 +15,58 @@ kube-prometheus-stack:
               key: password
 
   alertmanager:
-    enabled: false
+    enabled: true
+    alertmanagerSpec:
+      secrets:
+        - alertmanager-slack-webhook
+    config:
+      global:
+        resolve_timeout: 5m
+      inhibit_rules:
+        - source_matchers:
+            - 'severity = critical'
+          target_matchers:
+            - 'severity =~ warning|info'
+          equal:
+            - 'namespace'
+            - 'alertname'
+        - source_matchers:
+            - 'severity = warning'
+          target_matchers:
+            - 'severity = info'
+          equal:
+            - 'namespace'
+            - 'alertname'
+        - source_matchers:
+            - 'alertname = InfoInhibitor'
+          target_matchers:
+            - 'severity = info'
+          equal:
+            - 'namespace'
+        - target_matchers:
+            - 'alertname = InfoInhibitor'
+      route:
+        group_by: ['namespace', 'alertname']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 12h
+        receiver: 'slack'
+        routes:
+          - receiver: 'null'
+            matchers:
+              - alertname = "Watchdog"
+      receivers:
+        - name: 'null'
+        - name: 'slack'
+          slack_configs:
+            - api_url_file: /etc/alertmanager/secrets/alertmanager-slack-webhook/webhook-url
+              channel: '#alerts'
+              send_resolved: true
+      templates:
+        - '/etc/alertmanager/config/*.tmpl'
+
+# 1Password item for the Slack Incoming Webhook URL (Alertmanager posts to #alerts).
+# Path-safe title (`<system>.<purpose>`), not the item UUID. Don't rename the
+# item in 1Password without updating this.
+alertmanagerSlackWebhook:
+  onePasswordItem: alertmanager.slack-webhook
