@@ -1,32 +1,24 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: logging
+  name: logging-collectors
   namespace: argocd
 spec:
   goTemplate: true
   generators:
     - matrix:
         generators:
-          # Loki + the in-cluster collector stay platform-only. Stage/prod
-          # collectors are logging-collectors-appset.yaml → otlp.dieu.dev (#58).
           - clusters:
               selector:
-                matchLabels:
-                  purpose: platform
+                matchExpressions:
+                  - {key: purpose, operator: In, values: [stage, prod]}
           - list:
               elements:
-                - app: loki
-                  namespace: monitoring
-                  wave: "0"
                 - app: otel-collector
                   namespace: monitoring
-                  wave: "1"
   template:
     metadata:
       name: "{{ .app }}-{{ .name }}"
-      annotations:
-        argocd.argoproj.io/sync-wave: "{{ .wave }}"
     spec:
       project: default
       sources:
