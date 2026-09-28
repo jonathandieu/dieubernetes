@@ -81,6 +81,14 @@ loki:
   test:
     enabled: false
 
+# Public OTLP ingest for stage/prod collectors (#58). Platform collector
+# keeps using ClusterIP loki-gateway (no auth). This front door is the
+# only authenticated path.
+otlpIngest:
+  enabled: true
+  hostname: otlp.dieu.dev
+  onePasswordItem: loki.otlp-auth
+
 # Top-level (consumed by this chart's own ExternalSecret template, not the subchart).
 externalSecret:
   targetName: loki-spaces-credentials
