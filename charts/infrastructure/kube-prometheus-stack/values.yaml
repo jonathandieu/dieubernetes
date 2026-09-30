@@ -65,8 +65,8 @@ kube-prometheus-stack:
       templates:
         - '/etc/alertmanager/config/*.tmpl'
 
-# 1Password item for the Slack Incoming Webhook URL (Alertmanager posts to #alerts).
-# Path-safe title (`<system>.<purpose>`), not the item UUID. Don't rename the
-# item in 1Password without updating this.
 alertmanagerSlackWebhook:
   onePasswordItem: alertmanager.slack-webhook
+
+grafanaCloud:
+  onePasswordItem: grafana.prometheus

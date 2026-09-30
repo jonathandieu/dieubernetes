@@ -15,4 +15,4 @@ spec:
   data:
     - secretKey: token
       remoteRef:
-        key: nyanfji2utddkz7vpfqstataoe/credential
+        key: {{ .Values.cloudflare.onePasswordItem }}/credential
