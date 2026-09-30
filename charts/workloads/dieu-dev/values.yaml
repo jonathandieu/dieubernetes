@@ -35,13 +35,9 @@ api:
     limits:
       memory: 64Mi
 
-# Private GHCR packages (dieu.dev is a private repo). Login item must live
-# in the "1Password" vault — the onepassword ClusterSecretStore is scoped
-# to that vault, not "Private". Fields: username (GitHub user) and password
-# (PAT with read:packages). Path-safe title (`<system>.<purpose>`), not the
-# item UUID. Don't rename the item in 1Password without updating this.
 ghcrPull:
-  onePasswordItem: dieu-dev.ghcr-pull
+  username: jonathandieu
+  onePasswordItem: github.ghcr-pull
 
 imagePullSecrets:
   - name: dieu-dev-ghcr-pull
