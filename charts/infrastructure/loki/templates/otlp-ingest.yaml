@@ -1,0 +1,94 @@
+{{- if .Values.otlpIngest.enabled }}
+# Public ingest front door. ClusterIP loki-gateway stays unauthenticated so
+# Grafana and the platform collector keep working; only this path needs a
+# password. Nginx is ~16Mi and only proxies /otlp/.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-otlp-ingest
+  namespace: {{ .Release.Namespace }}
+data:
+  nginx.conf: |
+    worker_processes 1;
+    error_log /dev/stderr warn;
+    pid /tmp/nginx.pid;
+    events { worker_connections 128; }
+    http {
+      access_log /dev/stdout combined;
+      server {
+        listen 8080;
+        server_tokens off;
+        client_max_body_size 16m;
+        location /healthz { return 200; }
+        location /otlp/ {
+          auth_basic "otlp";
+          auth_basic_user_file /etc/nginx/htpasswd/htpasswd;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header Authorization "";
+          proxy_read_timeout 60s;
+          proxy_pass http://{{ .Release.Name }}-gateway.{{ .Release.Namespace }}.svc.cluster.local;
+        }
+        location / { return 404; }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki-otlp-ingest
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: loki-otlp-ingest
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: loki-otlp-ingest
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.27-alpine
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+            - name: htpasswd
+              mountPath: /etc/nginx/htpasswd
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+      volumes:
+        - name: config
+          configMap:
+            name: loki-otlp-ingest
+        - name: htpasswd
+          secret:
+            secretName: loki-otlp-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-otlp-ingest
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app.kubernetes.io/name: loki-otlp-ingest
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+{{- end }}
