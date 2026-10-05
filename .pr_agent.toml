@@ -1,0 +1,25 @@
+# Catalog ids from https://docs.digitalocean.com/products/inference/details/models/ (2026-10-05).
+# OPENAI.API_BASE is set in the workflow; repo-local openai.api_base is ignored.
+
+[config]
+model = "deepseek-v4.1-flash"
+fallback_models = ["llama-4-maverick", "glm-5.3-flash"]
+custom_model_max_tokens = 128000
+restricted_mode = true
+
+[github_action_config]
+auto_review = false
+auto_describe = false
+auto_improve = false
+handle_push_trigger = false
+fail_on_tool_errors = false
+pr_actions = ["labeled"]
+
+[pr_reviewer]
+extra_instructions = """\
+Flag Secret data in CI comments, empty or floating image tags, and HTTPRoute hostname conflicts.
+"""
+
+[litellm]
+custom_llm_provider = "openai"
+drop_params = true

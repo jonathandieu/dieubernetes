@@ -1,0 +1,74 @@
+# Comment-only PR-Agent (Qodo OSS). Not a merge gate.
+# Slash /review and /ask on a PR, or add the pr-agent label.
+# Pin is the 0.47.0-github_action image digest from Docker Hub (2026-10-05).
+# the-pr-agent/pr-agent action.yaml FROM is the floating :github_action tag, so the
+# image digest is the real pin. OPENAI.API_BASE is host-only; ignored in .pr_agent.toml.
+
+name: PR-Agent
+
+on:
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [labeled]
+
+jobs:
+  pr-agent:
+    if: >
+      github.event.sender.type != 'Bot'
+      && (
+        (
+          github.event_name == 'issue_comment'
+          && github.event.issue.pull_request
+          && (
+            contains(github.event.comment.body, '/review')
+            || contains(github.event.comment.body, '/ask')
+          )
+        )
+        || (
+          github.event_name == 'pull_request'
+          && github.event.label.name == 'pr-agent'
+          && github.event.pull_request.head.repo.full_name == github.repository
+        )
+      )
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    name: Comment-only review
+    steps:
+      - name: Skip fork pull requests
+        id: fork
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            same=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${{ github.event.issue.number }}" --jq '.head.repo.full_name == .base.repo.full_name')
+          else
+            same=true
+          fi
+          echo "same_repo=${same}" >> "${GITHUB_OUTPUT}"
+
+      - name: PR Agent
+        if: steps.fork.outputs.same_repo == 'true'
+        id: pragent
+        uses: docker://pragent/pr-agent@sha256:31b9aac6ab067bada9a0c1b001d30ebc500ea4487e00a93c18c59b9ef5fa66db # 0.47.0-github_action
+        env:
+          OPENAI_KEY: ${{ secrets.DO_INFERENCE_API_KEY }}
+          OPENAI.API_BASE: https://inference.do-ai.run/v1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_action_config.auto_review: ${{ github.event_name == 'pull_request' && github.event.action == 'labeled' }}
+          github_action_config.auto_describe: "false"
+          github_action_config.auto_improve: "false"
+          github_action_config.handle_push_trigger: "false"
+          github_action_config.fail_on_tool_errors: "false"
+          github_action_config.pr_actions: '["labeled"]'
+          config.restricted_mode: "true"
+          config.model: "deepseek-v4.1-flash"
+          config.fallback_models: '["llama-4-maverick", "glm-5.3-flash"]'
+          config.custom_model_max_tokens: "128000"
+          litellm.custom_llm_provider: "openai"
+          litellm.drop_params: "true"
+          pr_reviewer.extra_instructions: "Flag Secret data in CI comments, empty or floating image tags, and HTTPRoute hostname conflicts."
