@@ -1,9 +1,10 @@
-# Comment-only PR-Agent (The-PR-Agent OSS). Not a merge gate.
+# Comment-only PR-Agent (The-PR-Agent OSS). Not a merge gate for LLM output.
 # Auto /review on opened, synchronize, ready_for_review. Slash /review and /ask
 # stay for repo writers. No checkout. No pull_request_target.
 # Pin is the 0.47.0-github_action image index digest from Docker Hub (2026-10-02).
 # the-pr-agent/pr-agent action.yaml FROM is the floating :github_action tag, so the
 # image digest is the real pin. OPENAI.API_BASE is host-only; ignored in .pr_agent.toml.
+# Missing DO_INFERENCE_API_KEY fails the job. LLM errors do not.
 
 name: PR-Agent
 
@@ -31,8 +32,8 @@ jobs:
           github.event_name == 'issue_comment'
           && github.event.issue.pull_request
           && (
-            startsWith(github.event.comment.body, '/review')
-            || startsWith(github.event.comment.body, '/ask')
+            startsWith(format('{0} ', github.event.comment.body), '/review ')
+            || startsWith(format('{0} ', github.event.comment.body), '/ask ')
           )
           && (
             github.event.comment.author_association == 'OWNER'
@@ -57,7 +58,6 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
-    continue-on-error: true
     permissions:
       contents: read
       issues: write
@@ -78,9 +78,39 @@ jobs:
           fi
           echo "same_repo=${same}" >> "${GITHUB_OUTPUT}"
 
+      - name: Require DO_INFERENCE_API_KEY
+        if: steps.fork.outputs.same_repo == 'true'
+        env:
+          KEY: ${{ secrets.DO_INFERENCE_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          marker='<!-- pr-agent-missing-secret -->'
+          ids=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | contains("<!-- pr-agent-missing-secret -->")) | .id')
+
+          if [ -n "${KEY}" ]; then
+            for id in ${ids}; do
+              gh api -X DELETE "repos/${GITHUB_REPOSITORY}/issues/comments/${id}" || true
+            done
+            exit 0
+          fi
+
+          if [ -z "${ids}" ]; then
+            body=$(printf '%s\n%s\n\n%s' \
+              "${marker}" \
+              'PR-Agent did not run: repo Actions secret `DO_INFERENCE_API_KEY` is missing.' \
+              'Add a DigitalOcean Inference model access key (Control Panel → Inference → Model Access Keys) as that secret. Not a droplet PAT. This check stays red until it exists.')
+            gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" -f body="${body}"
+          fi
+
+          echo '::error::DO_INFERENCE_API_KEY is missing. Add it as a repo Actions secret.'
+          exit 1
+
       - name: PR Agent
         if: steps.fork.outputs.same_repo == 'true'
         id: pragent
+        continue-on-error: true
         uses: docker://pragent/pr-agent@sha256:31b9aac6ab067bada9a0c1b001d30ebc500ea4487e00a93c18c59b9ef5fa66db # 0.47.0-github_action
         env:
           OPENAI_KEY: ${{ secrets.DO_INFERENCE_API_KEY }}

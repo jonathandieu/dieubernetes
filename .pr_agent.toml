@@ -1,4 +1,4 @@
-# Catalog ids from https://docs.digitalocean.com/products/inference/details/models/ (2026-10-05).
+# Catalog ids from https://docs.digitalocean.com/products/inference/details/models/ (2026-10-07).
 # OPENAI.API_BASE is set in the workflow; repo-local openai.api_base is ignored.
 # Workflow env is the live source until this file is on the default branch.
 
