@@ -1,0 +1,58 @@
+authentik:
+  # App config. All secrets (AUTHENTIK_SECRET_KEY, DB password, bootstrap admin)
+  # arrive as AUTHENTIK_* env from the `authentik-secrets` k8s secret via
+  # global.envFrom below, so nothing sensitive lives in git.
+  authentik:
+    postgresql:
+      host: authentik-postgresql
+    redis:
+      host: authentik-redis-master
+
+  global:
+    envFrom:
+      - secretRef:
+          name: authentik-secrets
+
+  server:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+    # exposed via cloudflared, not an in-cluster ingress.
+    ingress:
+      enabled: false
+
+  worker:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 384Mi
+      limits:
+        memory: 768Mi
+
+  # Bundled Postgres: reads its password from the same secret Authentik uses.
+  postgresql:
+    enabled: true
+    auth:
+      username: authentik
+      database: authentik
+      existingSecret: authentik-secrets
+      secretKeys:
+        adminPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+        userPasswordKey: AUTHENTIK_POSTGRESQL__PASSWORD
+
+  # Bundled Redis: internal only, no auth for the PoC.
+  redis:
+    enabled: true
+    auth:
+      enabled: false
+
+# Top-level (consumed by this chart's own ExternalSecret template, not the subchart).
+externalSecret:
+  targetName: authentik-secrets
+  # 1Password item holding the fields below. Replace with the real item UUID.
+  onePasswordItem: REPLACE-WITH-AUTHENTIK-SECRETS-ITEM-UUID
