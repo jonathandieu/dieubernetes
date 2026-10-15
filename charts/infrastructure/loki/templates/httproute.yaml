@@ -1,0 +1,28 @@
+{{- if .Values.otlpIngest.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: loki-otlp
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: public
+      namespace: cilium-gateway-system
+  hostnames:
+    - {{ .Values.otlpIngest.hostname | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /otlp
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: loki-otlp-ingest
+          port: 80
+          weight: 1
+{{- end }}

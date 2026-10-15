@@ -1,0 +1,16 @@
+otlpAuth:
+  enabled: true
+
+opentelemetry-collector:
+  extraEnvs:
+    - name: LOKI_OTLP_AUTH
+      valueFrom:
+        secretKeyRef:
+          name: loki-otlp-auth
+          key: authorization
+  config:
+    exporters:
+      otlphttp/loki:
+        logs_endpoint: https://otlp.dieu.dev/otlp/v1/logs
+        headers:
+          Authorization: ${LOKI_OTLP_AUTH}

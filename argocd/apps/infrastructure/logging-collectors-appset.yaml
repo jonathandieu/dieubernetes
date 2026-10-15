@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: logging-collectors
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: purpose, operator: In, values: [stage, prod]}
+          - list:
+              elements:
+                - app: otel-collector
+                  namespace: monitoring
+  template:
+    metadata:
+      name: "{{ .app }}-{{ .name }}"
+    spec:
+      project: default
+      sources:
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          ref: values
+        - repoURL: https://github.com/jonathandieu/dieubernetes
+          targetRevision: HEAD
+          path: "charts/infrastructure/{{ .app }}"
+          helm:
+            releaseName: "{{ .app }}"
+            valueFiles:
+              - values.yaml
+              - "$values/clusters/{{ .name }}/overrides/{{ .app }}.yaml"
+            ignoreMissingValueFiles: true
+      destination:
+        server: "{{ .server }}"
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true

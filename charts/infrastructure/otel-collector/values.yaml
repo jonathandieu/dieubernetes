@@ -1,3 +1,11 @@
+# When true, pull the Basic auth header from 1Password and send it on every
+# OTLP export. Platform talks to ClusterIP loki-gateway and leaves this off;
+# stage/prod hit https://otlp.dieu.dev and turn it on.
+otlpAuth:
+  enabled: false
+  onePasswordItem: loki.otlp-auth
+  secretName: loki-otlp-auth
+
 opentelemetry-collector:
   # DaemonSet so the filelog receiver can tail every node's container logs.
   mode: daemonset
