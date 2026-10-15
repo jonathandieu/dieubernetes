@@ -1,0 +1,11 @@
+Source: https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/external-secrets.io/clustersecretstore_v1.json
+Catalog commit: b7e2015f (2026-10-08, "update external-secrets.io CRDs (#988)")
+
+kubeconform v0.6.7 (and v0.8.0) force JSON Schema Draft-4. The catalog
+file is valid newer-draft JSON Schema: one property named
+additionalProperties (JSONSchemaProps on spec.provider.crd.whitelist.rules)
+is the boolean false. Draft-4 requires a schema object there, so
+Compile fails and kubeconform reports "could not find schema" after a
+successful HTTP 200.
+
+Patched: that boolean false -> {"not": {}}

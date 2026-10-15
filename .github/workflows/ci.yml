@@ -71,10 +71,20 @@ jobs:
             fi
 
             helm lint "$chart"
+            # datreeio/CRDs-catalog has
+            # external-secrets.io/clustersecretstore_v1.json (HTTP 200,
+            # lowercase kind), but kubeconform v0.6.7 compiles Draft-4
+            # only. The catalog v1 file embeds a boolean schema under
+            # properties.additionalProperties (JSONSchemaProps on the
+            # crd provider), so Compile fails and kubeconform reports
+            # "could not find schema". The in-repo copy is that file
+            # with the boolean rewritten as a Draft-4 object. Missing
+            # local files 404 through to the catalog for every other kind.
             helm template release "$chart" \
               | kubeconform -strict \
                   -kubernetes-version 1.36.0 \
                   -schema-location default \
+                  -schema-location '.github/kubeconform-schemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                   -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                   -cache /tmp/kubeconform-cache \
                   -skip CustomResourceDefinition \
@@ -120,6 +130,7 @@ jobs:
             | xargs -0 -r kubeconform -strict \
                 -kubernetes-version 1.36.0 \
                 -schema-location default \
+                -schema-location '.github/kubeconform-schemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                 -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
                 -cache /tmp/kubeconform-cache \
                 -skip CustomResourceDefinition \
