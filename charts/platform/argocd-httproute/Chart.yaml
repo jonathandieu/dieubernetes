@@ -1,0 +1,4 @@
+apiVersion: v2
+name: argocd-httproute
+description: HTTPRoute for the existing Argo CD server Service on the platform Gateway
+version: 0.1.0
