@@ -70,3 +70,11 @@ alertmanagerSlackWebhook:
 
 grafanaCloud:
   onePasswordItem: grafana.prometheus
+
+# Public hostname for in-cluster Grafana. Off by default: this chart runs on
+# every cluster, and grafana.dieu.dev must stay unique on the platform gateway
+# (do not collide with preview/recipes/analytics/changes/otlp).
+grafanaHttpRoute:
+  enabled: false
+  hostname: grafana.dieu.dev
+

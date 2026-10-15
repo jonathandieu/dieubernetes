@@ -2,9 +2,21 @@
 # Prometheus is already provisioned by the chart's sidecar
 # (grafana.sidecar.datasources.defaultDatasourceEnabled, isDefault: true).
 # This file only adds Loki, which the chart doesn't know about.
+#
+# grafana.dieu.dev HTTPRoute is platform-only. Grafana keeps its own login
+# (anonymous stays off); Cloudflare Access sits in front of the hostname.
+grafanaHttpRoute:
+  enabled: true
+
 kube-prometheus-stack:
   grafana:
     enabled: true
+    grafana.ini:
+      auth.anonymous:
+        enabled: false
+      server:
+        domain: grafana.dieu.dev
+        root_url: https://grafana.dieu.dev
     datasources:
       datasources.yaml:
         apiVersion: 1
@@ -13,3 +25,4 @@ kube-prometheus-stack:
             type: loki
             url: http://loki-gateway.monitoring.svc.cluster.local
             access: proxy
+
