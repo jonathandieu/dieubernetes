@@ -1,0 +1,15 @@
+# kargo.internal.dieu.dev HTTPRoute is platform-only. Kargo keeps its own
+# admin login; Cloudflare Access sits in front of the hostname.
+# TLS terminates at the Gateway, so the API Service is HTTP :80.
+httpRoute:
+  enabled: true
+
+kargo:
+  api:
+    host: kargo.internal.dieu.dev
+    tls:
+      enabled: false
+      terminatedUpstream: true
+    argocd:
+      urls:
+        "": https://argocd.internal.dieu.dev

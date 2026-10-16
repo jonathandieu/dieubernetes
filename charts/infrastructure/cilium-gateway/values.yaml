@@ -24,3 +24,9 @@ gateway:
     # exists at the origin, not that it's publicly trusted. Switch to a Cloudflare
     # Origin CA or Let's Encrypt DNS-01 issuer if the zone moves to "Full (strict)".
     clusterIssuer: selfsigned
+  # Extra HTTPS listeners (same Gateway, unique hostname). Needed for names
+  # the apex wildcard does not cover, e.g. *.internal.dieu.dev.
+  extraTlsListeners: []
+  # - name: https-internal
+  #   hostname: "*.internal.dieu.dev"
+  #   secretName: cilium-gateway-internal-wildcard-tls

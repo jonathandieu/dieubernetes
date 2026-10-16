@@ -31,4 +31,17 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    {{- range .Values.gateway.extraTlsListeners }}
+    - name: {{ .name }}
+      protocol: HTTPS
+      port: 443
+      hostname: {{ .hostname | quote }}
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ .secretName }}
+      allowedRoutes:
+        namespaces:
+          from: All
+    {{- end }}
 {{- end }}

@@ -4,3 +4,8 @@ gateway:
   # Envoy created its own. Adopt this one so Cilium does not spawn a third.
   lbAnnotations:
     kubernetes.digitalocean.com/load-balancer-id: "e80ddc3a-9ee3-447c-b87e-66f897bb1b00"
+  # *.dieu.dev does not cover argocd/kargo.internal.dieu.dev (one label only).
+  extraTlsListeners:
+    - name: https-internal
+      hostname: "*.internal.dieu.dev"
+      secretName: cilium-gateway-internal-wildcard-tls

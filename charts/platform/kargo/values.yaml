@@ -1,12 +1,21 @@
 kargoAdmin:
   onePasswordItem: kargo.admin
 
+# kargo.internal.dieu.dev. Off by default; enable in the platform override.
+httpRoute:
+  enabled: false
+  hostname: kargo.internal.dieu.dev
+
 kargo:
   api:
     adminAccount:
       enabled: true
     secret:
       name: kargo-admin-credentials
+    # Parent HTTPRoute reads this; subchart default is true but parent
+    # templates do not inherit it. Platform override flips it off.
+    tls:
+      enabled: true
   argocd:
     integrationEnabled: true
     namespace: argocd
