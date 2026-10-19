@@ -1,17 +1,35 @@
 {{- if .Values.gateway.create }}
+{{- $infra := dict }}
+{{- range $k, $v := .Values.gateway.lbAnnotations }}
+{{- $_ := set $infra $k $v }}
+{{- end }}
+{{- if .Values.gateway.originLock.allowCloudflareIPs }}
+{{- $_ := set $infra "service.beta.kubernetes.io/do-loadbalancer-allow-rules" (include "cilium-gateway.cloudflareAllowRules" .) }}
+{{- end }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: {{ .Values.gateway.name }}
   namespace: {{ .Release.Namespace }}
   annotations:
+    {{- if .Values.gateway.originLock.originCA.enabled }}
+    cert-manager.io/issuer: {{ .Values.gateway.originLock.originCA.issuerName }}
+    cert-manager.io/issuer-kind: ClusterOriginIssuer
+    cert-manager.io/issuer-group: cert-manager.k8s.cloudflare.com
+    cert-manager.io/duration: {{ .Values.gateway.originLock.originCA.duration | quote }}
+    cert-manager.io/renew-before: {{ .Values.gateway.originLock.originCA.renewBefore | quote }}
+    cert-manager.io/private-key-algorithm: ECDSA
+    {{- else }}
     cert-manager.io/cluster-issuer: {{ .Values.gateway.tls.clusterIssuer }}
+    {{- end }}
 spec:
   gatewayClassName: cilium
-  {{- if .Values.gateway.lbAnnotations }}
+  {{- if $infra }}
   infrastructure:
     annotations:
-      {{- toYaml .Values.gateway.lbAnnotations | nindent 6 }}
+      {{- range $k, $v := $infra }}
+      {{ $k }}: {{ $v | quote }}
+      {{- end }}
   {{- end }}
   listeners:
     - name: http
