@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'charts/**'
+      - 'clusters/**'
       - 'argocd/**'
       - '.github/workflows/ci.yml'
       - '.github/actions/**'
@@ -80,15 +81,27 @@ jobs:
             # "could not find schema". The in-repo copy is that file
             # with the boolean rewritten as a Draft-4 object. Missing
             # local files 404 through to the catalog for every other kind.
-            helm template release "$chart" \
-              | kubeconform -strict \
-                  -kubernetes-version 1.36.0 \
-                  -schema-location default \
-                  -schema-location '.github/kubeconform-schemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
-                  -cache /tmp/kubeconform-cache \
-                  -skip CustomResourceDefinition \
-                  -summary
+            kubeconform_chart() {
+              helm template release "$chart" "$@" \
+                | kubeconform -strict \
+                    -kubernetes-version 1.36.0 \
+                    -schema-location default \
+                    -schema-location '.github/kubeconform-schemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                    -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+                    -cache /tmp/kubeconform-cache \
+                    -skip CustomResourceDefinition \
+                    -summary
+            }
+            kubeconform_chart
+            # Argo merges clusters/<name>/overrides/<chart>.yaml on top of
+            # chart values. Default-only render misses platform-only
+            # resources (e.g. grafana HTTPRoute).
+            name=$(basename "$chart")
+            for override in clusters/*/overrides/"${name}.yaml"; do
+              [ -f "$override" ] || continue
+              echo "--- $chart + $override ---"
+              kubeconform_chart -f "$override"
+            done
           done
 
   argocd-validate:
@@ -156,6 +169,28 @@ jobs:
       - name: Render templates
         run: |
           mkdir -p /tmp/base /tmp/head
+          # Redact Secret data before this gets posted to a public PR
+          # comment below. Keeps the key names so the diff is still useful.
+          # yq's own exit code is checked explicitly -- some charts render
+          # YAML yq can't fully round-trip (e.g. external-secrets' CRD
+          # descriptions), and that failure doesn't otherwise propagate,
+          # which would silently write a truncated file instead of erroring.
+          render_chart() {
+            local dest="$1" chart="$2"
+            shift 2
+            local out
+            if out=$(helm template release "$chart" "$@" 2>/dev/null); then
+              if ! echo "$out" | yq eval '
+                (select(.kind == "Secret" and has("data")) | .data) |= with_entries(.value = "<redacted>") |
+                (select(.kind == "Secret" and has("stringData")) | .stringData) |= with_entries(.value = "<redacted>")
+              ' - > "$dest" 2>"${dest}.yq-err"; then
+                echo "# redaction failed for $chart, see CI log" > "$dest"
+                cat "${dest}.yq-err"
+              fi
+            else
+              echo "# helm template failed for $chart" > "$dest"
+            fi
+          }
           for dir in base head; do
             for chart in $dir/charts/*/*; do
               [ -f "$chart/Chart.yaml" ] || continue
@@ -163,23 +198,14 @@ jobs:
               helm dependency update "$chart" --skip-refresh 2>/dev/null \
                 || helm dependency update "$chart" 2>/dev/null \
                 || true
-              # Redact Secret data before this gets posted to a public PR
-              # comment below. Keeps the key names so the diff is still useful.
-              # yq's own exit code is checked explicitly -- some charts render
-              # YAML yq can't fully round-trip (e.g. external-secrets' CRD
-              # descriptions), and that failure doesn't otherwise propagate,
-              # which would silently write a truncated file instead of erroring.
-              if out=$(helm template release "$chart" 2>/dev/null); then
-                if ! echo "$out" | yq eval '
-                  (select(.kind == "Secret" and has("data")) | .data) |= with_entries(.value = "<redacted>") |
-                  (select(.kind == "Secret" and has("stringData")) | .stringData) |= with_entries(.value = "<redacted>")
-                ' - > /tmp/$dir/$name.yaml 2>/tmp/$dir-$name-yq-err.txt; then
-                  echo "# redaction failed for $chart, see CI log" > /tmp/$dir/$name.yaml
-                  cat /tmp/$dir-$name-yq-err.txt
-                fi
-              else
-                echo "# helm template failed for $chart" > /tmp/$dir/$name.yaml
-              fi
+              render_chart "/tmp/$dir/${name}.yaml" "$chart"
+              # Same merge as Argo: chart values.yaml, then cluster override.
+              # Default-only render misses platform-only templates.
+              for override in "$dir"/clusters/*/overrides/"${name}.yaml"; do
+                [ -f "$override" ] || continue
+                cluster=$(basename "$(dirname "$(dirname "$override")")")
+                render_chart "/tmp/$dir/${name}.${cluster}.yaml" "$chart" -f "$override"
+              done
             done
           done
 
