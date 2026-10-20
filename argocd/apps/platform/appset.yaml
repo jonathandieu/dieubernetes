@@ -18,6 +18,9 @@ spec:
                 - app: cluster-registrations
                   namespace: argocd
                   wave: "0"
+                - app: argocd-httproute
+                  namespace: argocd
+                  wave: "0"
                 - app: kargo
                   namespace: kargo
                   wave: "0"

@@ -1,0 +1,4 @@
+# argocd.internal.dieu.dev HTTPRoute is platform-only. Argo CD keeps its
+# own login; Cloudflare Access sits in front of the hostname.
+httpRoute:
+  enabled: true

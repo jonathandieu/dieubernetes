@@ -1,0 +1,8 @@
+# Points at the existing Argo CD Service (not a Helm wrap of argo-cd).
+# Off by default; enable in the platform override.
+httpRoute:
+  enabled: false
+  hostname: argocd.internal.dieu.dev
+  service:
+    name: argocd-server
+    port: 80
