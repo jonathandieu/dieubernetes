@@ -1,0 +1,6 @@
+dependencies:
+- name: plausible-analytics
+  repository: https://imio.github.io/helm-charts
+  version: 0.4.2
+digest: sha256:40b3e7e85d358993941e59e70b53fa51425bd45c5004cd79bdc4ae712724079e
+generated: "2026-08-06T18:38:25.11275-07:00"
