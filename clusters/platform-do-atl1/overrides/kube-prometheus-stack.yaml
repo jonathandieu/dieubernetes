@@ -5,12 +5,25 @@
 #
 # grafana.dieu.dev HTTPRoute is platform-only. Grafana keeps its own login
 # (anonymous stays off); Cloudflare Access sits in front of the hostname.
+# Admin password comes from 1Password grafana.admin (not Helm lookup).
+# PVC keeps SQLite so service accounts survive pod restarts.
 grafanaHttpRoute:
+  enabled: true
+
+grafanaAdmin:
   enabled: true
 
 kube-prometheus-stack:
   grafana:
     enabled: true
+    admin:
+      existingSecret: grafana-admin
+      userKey: admin-user
+      passwordKey: admin-password
+    persistence:
+      enabled: true
+      size: 10Gi
+      # storageClassName omitted: cluster default (DOKS do-block-storage).
     grafana.ini:
       auth.anonymous:
         enabled: false

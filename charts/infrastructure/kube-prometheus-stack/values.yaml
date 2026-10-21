@@ -71,6 +71,14 @@ alertmanagerSlackWebhook:
 grafanaCloud:
   onePasswordItem: grafana.prometheus
 
+# In-cluster Grafana admin login. Off by default (Grafana is platform-only).
+# Pin the password in 1Password so Argo Helm lookup cannot mint a new one
+# on every sync. Username is not a secret.
+grafanaAdmin:
+  enabled: false
+  onePasswordItem: grafana.admin
+  username: admin
+
 # Public hostname for in-cluster Grafana. Off by default: this chart runs on
 # every cluster, and grafana.dieu.dev must stay unique on the platform gateway
 # (do not collide with preview/recipes/analytics/changes/otlp).
