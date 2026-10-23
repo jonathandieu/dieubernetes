@@ -1,0 +1,15 @@
+{{- if .Values.originCA.enabled }}
+apiVersion: cert-manager.k8s.cloudflare.com/v1
+kind: ClusterOriginIssuer
+metadata:
+  name: {{ .Values.originCA.issuerName }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  requestType: OriginECC
+  auth:
+    tokenRef:
+      name: {{ .Values.originCA.secretName }}
+      key: {{ .Values.originCA.secretKey }}
+{{- end }}

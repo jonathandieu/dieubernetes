@@ -5,3 +5,7 @@ dependencies:
   - name: cert-manager
     version: "v1.20.2"
     repository: https://charts.jetstack.io
+  - name: origin-ca-issuer
+    version: "0.6.10"
+    repository: "oci://ghcr.io/cloudflare/origin-ca-issuer-charts"
+    condition: origin-ca-issuer.enabled

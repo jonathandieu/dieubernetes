@@ -16,13 +16,11 @@ gateway:
   lbAnnotations: {}
   tls:
     # Wildcard covers all app subdomains without a separate cert per listener.
-    # cert-manager's Gateway API support (cert-manager.io/cluster-issuer annotation)
+    # cert-manager's Gateway API support (cert-manager.io/issuer* annotations)
     # derives the Certificate from this hostname automatically.
     hostname: "*.dieu.dev"
     secretName: cilium-gateway-wildcard-tls
-    # Self-signed is sufficient: Cloudflare SSL mode "Full" validates only that a cert
-    # exists at the origin, not that it's publicly trusted. Switch to a Cloudflare
-    # Origin CA or Let's Encrypt DNS-01 issuer if the zone moves to "Full (strict)".
+    # Fallback only when originLock.originCA.enabled is false.
     clusterIssuer: selfsigned
   # Extra HTTPS listeners (same Gateway, unique hostname). Needed for names
   # the apex wildcard does not cover, e.g. *.internal.dieu.dev.
@@ -30,3 +28,33 @@ gateway:
   # - name: https-internal
   #   hostname: "*.internal.dieu.dev"
   #   secretName: cilium-gateway-internal-wildcard-tls
+  originLock:
+    # Cilium Gateway API does not implement frontendValidation, so Authenticated
+    # Origin Pulls cannot be enforced at the Gateway. Restrict the adopted DO
+    # LB to Cloudflare IPv4 instead (do-loadbalancer-allow-rules).
+    allowCloudflareIPs: true
+    # https://www.cloudflare.com/ips-v4/ — omit IPv6 (DO LB rejects it).
+    cloudflareIPv4:
+      - 173.245.48.0/20
+      - 103.21.244.0/22
+      - 103.22.200.0/22
+      - 103.31.4.0/22
+      - 141.101.64.0/18
+      - 108.162.192.0/18
+      - 190.93.240.0/20
+      - 188.114.96.0/20
+      - 197.234.240.0/22
+      - 198.41.128.0/17
+      - 162.158.0.0/15
+      - 104.16.0.0/13
+      - 104.24.0.0/14
+      - 172.64.0.0/13
+      - 131.0.72.0/22
+    originCA:
+      # Cloudflare Origin CA via cert-manager ClusterOriginIssuer (not a pasted secret).
+      # Required for SSL Full (strict). Browsers do not trust Origin CA, so a Host
+      # header against the public LB IP fails TLS in a browser even before the allowlist.
+      enabled: true
+      issuerName: origin-ca
+      duration: 168h
+      renewBefore: 24h

@@ -11,3 +11,25 @@ cert-manager:
     enabled: true
     servicemonitor:
       enabled: true
+
+# Cloudflare Origin CA issuer. Token is 1Password item cloudflare.api-token
+# (field credential); the token needs Zone / SSL and Certificates / Edit.
+originCA:
+  enabled: true
+  issuerName: origin-ca
+  onePasswordItem: cloudflare.api-token
+  secretName: origin-ca-api-token
+  secretKey: key
+
+origin-ca-issuer:
+  enabled: true
+  controller:
+    image:
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 200m
+        memory: 128Mi
+      requests:
+        cpu: 20m
+        memory: 64Mi
