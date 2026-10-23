@@ -1,0 +1,43 @@
+# grafana/mimir 2.17 is classic ingesters (no Kafka). Pin so a 3.x image
+# cannot silently require ingest-storage.
+image:
+  repository: grafana/mimir
+  tag: 2.17.1
+
+# WAL + tsdb-sync live here; blocks ship to Spaces. Omit storageClassName:
+# cluster default (DOKS do-block-storage).
+persistence:
+  size: 10Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 2Gi
+
+# 14d, same cap as Loki. Compactor deletes blocks older than this from Spaces.
+retention: 336h
+
+# DO Spaces (S3-compatible). Bucket + region come from terraform
+# digitalocean_spaces_bucket.mimir; override per cluster if needed.
+storage:
+  bucket: dieubernetes-mimir
+  endpoint: nyc3.digitaloceanspaces.com
+  region: nyc3
+
+# Top-level (consumed by this chart's ExternalSecret, not a subchart).
+externalSecret:
+  targetName: mimir-spaces-credentials
+  # Bucket-scoped-by-convention Spaces key (access_key_id, secret_access_key),
+  # vault 1Password. Keys are account-wide; this item is for this workload.
+  onePasswordItem: digitalocean.mimir-spaces
+
+# Public remote_write front door for stage/prod Prometheus. ClusterIP Mimir
+# stays unauthenticated so Grafana and platform Prometheus keep working.
+# Nginx is ~16Mi and only proxies /api/v1/push.
+remoteWriteIngest:
+  enabled: true
+  hostname: mimir.dieu.dev
+  onePasswordItem: mimir.remote-write
+  nginxImage: nginx:1.27.5-alpine

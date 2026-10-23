@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+data:
+  mimir.yaml: |
+    # Single-process Mimir (Loki singleBinary analog). Rings are in-memory
+    # because there is one replica; do not scale this StatefulSet without
+    # switching rings to memberlist.
+    target: all
+    multitenancy_enabled: false
+    usage_stats:
+      enabled: false
+
+    server:
+      http_listen_port: 8080
+      grpc_listen_port: 9095
+      log_level: info
+
+    common:
+      storage:
+        backend: s3
+        s3:
+          endpoint: {{ .Values.storage.endpoint }}
+          region: {{ .Values.storage.region }}
+          access_key_id: ${AWS_ACCESS_KEY_ID}
+          secret_access_key: ${AWS_SECRET_ACCESS_KEY}
+
+    blocks_storage:
+      backend: s3
+      storage_prefix: blocks
+      s3:
+        bucket_name: {{ .Values.storage.bucket }}
+      tsdb:
+        dir: /data/tsdb
+      bucket_store:
+        sync_dir: /data/tsdb-sync
+
+    # Rules / Alertmanager stay on the PVC; kube-prometheus-stack already
+    # owns alerting. Blocks are the only thing that must hit Spaces.
+    ruler_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/rules
+    alertmanager_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/alertmanager
+
+    distributor:
+      ring:
+        kvstore:
+          store: inmemory
+
+    ingester:
+      ring:
+        replication_factor: 1
+        kvstore:
+          store: inmemory
+        tokens_file_path: /data/tokens
+
+    store_gateway:
+      sharding_ring:
+        replication_factor: 1
+        kvstore:
+          store: inmemory
+
+    compactor:
+      data_dir: /data/compactor
+      sharding_ring:
+        kvstore:
+          store: inmemory
+
+    ruler:
+      ring:
+        kvstore:
+          store: inmemory
+
+    limits:
+      compactor_blocks_retention_period: {{ .Values.retention }}
+      max_query_lookback: {{ .Values.retention }}
+      out_of_order_time_window: 30m
+      native_histograms_ingestion_enabled: true
+
+    activity_tracker:
+      filepath: /data/activity.log

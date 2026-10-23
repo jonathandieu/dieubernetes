@@ -1,7 +1,6 @@
-# Self-hosted Grafana on platform only; stage stays on Grafana Cloud (base values).
-# Prometheus is already provisioned by the chart's sidecar
-# (grafana.sidecar.datasources.defaultDatasourceEnabled, isDefault: true).
-# This file only adds Loki, which the chart doesn't know about.
+# Self-hosted Grafana on platform only. Prometheus sidecar is the local
+# scrape TSDB (isDefault); this file adds Loki + Mimir. Mimir is the 14d
+# Spaces store and the datasource for cluster/service dashboards.
 #
 # grafana.dieu.dev HTTPRoute is platform-only. Grafana keeps its own login
 # (anonymous stays off); Cloudflare Access sits in front of the hostname.
@@ -12,6 +11,10 @@ grafanaHttpRoute:
 
 grafanaAdmin:
   enabled: true
+
+# Platform Prometheus talks to ClusterIP Mimir; no basic auth.
+mimirRemoteWrite:
+  auth: false
 
 kube-prometheus-stack:
   grafana:
@@ -38,4 +41,19 @@ kube-prometheus-stack:
             type: loki
             url: http://loki-gateway.monitoring.svc.cluster.local
             access: proxy
-
+          # Not isDefault: a second default CrashLoopBackOff Grafana (#55).
+          # Pick Mimir when building multi-cluster dashboards.
+          - name: Mimir
+            type: prometheus
+            url: http://mimir.monitoring.svc.cluster.local:8080/prometheus
+            access: proxy
+            jsonData:
+              httpMethod: POST
+              prometheusType: Mimir
+              timeInterval: 30s
+  prometheus:
+    prometheusSpec:
+      externalLabels:
+        cluster: platform-do-atl1
+      remoteWrite:
+        - url: http://mimir.monitoring.svc.cluster.local:8080/api/v1/push
