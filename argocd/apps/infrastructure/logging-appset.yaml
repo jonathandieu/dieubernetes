@@ -8,8 +8,8 @@ spec:
   generators:
     - matrix:
         generators:
-          # Loki + the in-cluster collector stay platform-only. Stage/prod
-          # collectors are logging-collectors-appset.yaml → otlp.dieu.dev (#58).
+          # Loki + Mimir + the in-cluster collector stay platform-only.
+          # Stage/prod logs → otlp.dieu.dev (#58); metrics remote_write → mimir.dieu.dev.
           - clusters:
               selector:
                 matchLabels:
@@ -17,6 +17,9 @@ spec:
           - list:
               elements:
                 - app: loki
+                  namespace: monitoring
+                  wave: "0"
+                - app: mimir
                   namespace: monitoring
                   wave: "0"
                 - app: otel-collector
