@@ -14,3 +14,19 @@ opentelemetry-collector:
         logs_endpoint: https://otlp.dieu.dev/otlp/v1/logs
         headers:
           Authorization: ${LOKI_OTLP_AUTH}
+
+metricsCollector:
+  extraEnvs:
+    - name: CLUSTER_NAME
+      value: stage-do-atl1
+    - name: LOKI_OTLP_AUTH
+      valueFrom:
+        secretKeyRef:
+          name: loki-otlp-auth
+          key: authorization
+  config:
+    exporters:
+      otlphttp/mimir:
+        metrics_endpoint: https://otlp.dieu.dev/otlp/v1/metrics
+        headers:
+          Authorization: ${LOKI_OTLP_AUTH}

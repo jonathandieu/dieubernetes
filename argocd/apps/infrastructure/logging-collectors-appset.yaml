@@ -12,6 +12,7 @@ spec:
               selector:
                 matchExpressions:
                   - {key: purpose, operator: In, values: [stage, prod]}
+          # DaemonSet logs + Deployment metrics; stage/prod export OTLP to otlp.dieu.dev.
           - list:
               elements:
                 - app: otel-collector

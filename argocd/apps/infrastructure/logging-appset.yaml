@@ -9,7 +9,7 @@ spec:
     - matrix:
         generators:
           # Loki + Mimir + the in-cluster collector stay platform-only.
-          # Stage/prod push OTLP to otlp.dieu.dev (/otlp/v1/logs and, later, /metrics).
+          # Stage/prod push OTLP to otlp.dieu.dev (/otlp/v1/logs and /otlp/v1/metrics).
           - clusters:
               selector:
                 matchLabels:
