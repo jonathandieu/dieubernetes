@@ -2,19 +2,9 @@ kube-prometheus-stack:
   grafana:
     enabled: false  # platform override turns this on; stage/prod query Mimir via Grafana on platform
 
-  prometheus:
-    prometheusSpec:
-      # Long-term store is platform Mimir on Spaces (14d). Platform Prometheus
-      # overrides this URL to ClusterIP; stage/prod keep the public ingest.
-      remoteWrite:
-        - url: https://mimir.dieu.dev/api/v1/push
-          basicAuth:
-            username:
-              name: mimir-remote-write
-              key: username
-            password:
-              name: mimir-remote-write
-              key: password
+  # Local scrape TSDB only until the collector exports OTLP to Mimir.
+  # No remoteWrite (not Grafana Cloud, not mimir.dieu.dev).
+  prometheus: {}
 
   alertmanager:
     enabled: true
@@ -70,8 +60,8 @@ kube-prometheus-stack:
 alertmanagerSlackWebhook:
   onePasswordItem: alertmanager.slack-webhook
 
-# Grafana Cloud remote_write is off; metrics go to self-hosted Mimir on Spaces.
-# Flip enabled and restore the grafana.net URL above to send a copy there again.
+# Grafana Cloud remote_write stays off. Long-term metrics are platform Mimir
+# (OTLP on otlp.dieu.dev), filled by the collector in a later change.
 grafanaCloud:
   enabled: false
   onePasswordItem: grafana.prometheus
@@ -83,13 +73,6 @@ grafanaAdmin:
   enabled: false
   onePasswordItem: grafana.admin
   username: admin
-
-# Basic auth for stage/prod Prometheus → mimir.dieu.dev. Platform uses
-# ClusterIP and sets auth: false. Username is Helm, password is 1Password.
-mimirRemoteWrite:
-  auth: true
-  onePasswordItem: mimir.remote-write
-  username: mimir
 
 # Public hostname for in-cluster Grafana. Off by default: this chart runs on
 # every cluster, and grafana.dieu.dev must stay unique on the platform gateway

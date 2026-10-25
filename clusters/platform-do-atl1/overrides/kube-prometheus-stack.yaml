@@ -12,10 +12,6 @@ grafanaHttpRoute:
 grafanaAdmin:
   enabled: true
 
-# Platform Prometheus talks to ClusterIP Mimir; no basic auth.
-mimirRemoteWrite:
-  auth: false
-
 kube-prometheus-stack:
   grafana:
     enabled: true
@@ -55,5 +51,3 @@ kube-prometheus-stack:
     prometheusSpec:
       externalLabels:
         cluster: platform-do-atl1
-      remoteWrite:
-        - url: http://mimir.monitoring.svc.cluster.local:8080/api/v1/push
