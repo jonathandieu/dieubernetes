@@ -14,6 +14,7 @@ data:
       enabled: false
 
     server:
+      # OTLP HTTP is on this port at /otlp/v1/metrics (Mimir 2.17).
       http_listen_port: 8080
       grpc_listen_port: 9095
       log_level: info

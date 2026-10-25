@@ -33,11 +33,11 @@ externalSecret:
   # vault 1Password. Keys are account-wide; this item is for this workload.
   onePasswordItem: digitalocean.mimir-spaces
 
-# Public remote_write front door for stage/prod Prometheus. ClusterIP Mimir
-# stays unauthenticated so Grafana and platform Prometheus keep working.
-# Nginx is ~16Mi and only proxies /api/v1/push.
-remoteWriteIngest:
+# Public OTLP metrics door for stage/prod collectors (later plan).
+# ClusterIP Mimir stays unauthenticated so Grafana can query.
+# Same hostname and 1Password item as Loki logs ingest.
+otlpIngest:
   enabled: true
-  hostname: mimir.dieu.dev
-  onePasswordItem: mimir.remote-write
+  hostname: otlp.dieu.dev
+  onePasswordItem: loki.otlp-auth
   nginxImage: nginx:1.27.5-alpine
