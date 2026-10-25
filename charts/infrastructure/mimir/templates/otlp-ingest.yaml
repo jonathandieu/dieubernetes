@@ -1,11 +1,11 @@
-{{- if .Values.remoteWriteIngest.enabled }}
+{{- if .Values.otlpIngest.enabled }}
 # Public ingest front door. ClusterIP Mimir stays unauthenticated so Grafana
-# and platform Prometheus keep working; only this path needs a password.
-# Nginx is ~16Mi and only proxies /api/v1/push.
+# can query; only this path needs a password. Nginx is ~16Mi and only
+# proxies /otlp/v1/metrics.
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: mimir-remote-write
+  name: mimir-otlp-ingest
   namespace: {{ .Release.Namespace }}
 data:
   nginx.conf: |
@@ -20,8 +20,8 @@ data:
         server_tokens off;
         client_max_body_size 32m;
         location /healthz { return 200; }
-        location /api/v1/push {
-          auth_basic "mimir";
+        location /otlp/v1/metrics {
+          auth_basic "otlp";
           auth_basic_user_file /etc/nginx/htpasswd/htpasswd;
           proxy_http_version 1.1;
           proxy_set_header Host $host;
@@ -36,21 +36,21 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mimir-remote-write
+  name: mimir-otlp-ingest
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: mimir-remote-write
+      app.kubernetes.io/name: mimir-otlp-ingest
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: mimir-remote-write
+        app.kubernetes.io/name: mimir-otlp-ingest
     spec:
       containers:
         - name: nginx
-          image: {{ .Values.remoteWriteIngest.nginxImage | quote }}
+          image: {{ .Values.otlpIngest.nginxImage | quote }}
           ports:
             - name: http
               containerPort: 8080
@@ -74,19 +74,19 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: mimir-remote-write
+            name: mimir-otlp-ingest
         - name: htpasswd
           secret:
-            secretName: mimir-remote-write-auth
+            secretName: mimir-otlp-auth
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: mimir-remote-write
+  name: mimir-otlp-ingest
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
-    app.kubernetes.io/name: mimir-remote-write
+    app.kubernetes.io/name: mimir-otlp-ingest
   ports:
     - name: http
       port: 80
