@@ -1,8 +1,9 @@
-# grafana/mimir 2.17 is classic ingesters (no Kafka). Pin so a 3.x image
-# cannot silently require ingest-storage.
+# 3.2.3 is current (2026-10-22). Classic architecture: no Kafka. 3.x
+# ingest-storage is off in the ConfigMap so a tag bump cannot silently
+# require a broker. Do not float this tag.
 image:
   repository: grafana/mimir
-  tag: 2.17.1
+  tag: 3.2.3
 
 # WAL + tsdb-sync live here; blocks ship to Spaces. Omit storageClassName:
 # cluster default (DOKS do-block-storage).

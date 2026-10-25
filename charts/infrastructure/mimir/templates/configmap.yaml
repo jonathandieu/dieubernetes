@@ -13,8 +13,20 @@ data:
     usage_stats:
       enabled: false
 
+    # Classic write path (distributor -> ingester gRPC). 3.x defaults to
+    # ingest-storage (Kafka); keep that off until we add a broker on purpose.
+    ingest_storage:
+      enabled: false
+    ingester:
+      push_grpc_method_enabled: true
+      ring:
+        replication_factor: 1
+        kvstore:
+          store: inmemory
+        tokens_file_path: /data/tokens
+
     server:
-      # OTLP HTTP is on this port at /otlp/v1/metrics (Mimir 2.17).
+      # OTLP HTTP is on this port at /otlp/v1/metrics.
       http_listen_port: 8080
       grpc_listen_port: 9095
       log_level: info
@@ -53,13 +65,6 @@ data:
       ring:
         kvstore:
           store: inmemory
-
-    ingester:
-      ring:
-        replication_factor: 1
-        kvstore:
-          store: inmemory
-        tokens_file_path: /data/tokens
 
     store_gateway:
       sharding_ring:
