@@ -3,7 +3,7 @@ kube-prometheus-stack:
     enabled: false  # platform override turns this on; stage/prod query Mimir via Grafana on platform
 
   # Local scrape TSDB only until the collector exports OTLP to Mimir.
-  # No remoteWrite (not Grafana Cloud, not mimir.dieu.dev).
+  # No remoteWrite (Grafana Cloud off; no public Prometheus push hostname).
   prometheus: {}
 
   alertmanager:

@@ -9,7 +9,7 @@ spec:
     - matrix:
         generators:
           # Loki + Mimir + the in-cluster collector stay platform-only.
-          # Stage/prod logs → otlp.dieu.dev (#58); metrics remote_write → mimir.dieu.dev.
+          # Stage/prod push OTLP to otlp.dieu.dev (/otlp/v1/logs and, later, /metrics).
           - clusters:
               selector:
                 matchLabels:
