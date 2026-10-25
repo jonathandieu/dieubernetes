@@ -1,7 +1,7 @@
 {{- if .Values.otlpIngest.enabled }}
 # Public ingest front door. ClusterIP loki-gateway stays unauthenticated so
 # Grafana and the platform collector keep working; only this path needs a
-# password. Nginx is ~16Mi and only proxies /otlp/.
+# password. Nginx is ~16Mi and only proxies /otlp/v1/logs.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -20,7 +20,7 @@ data:
         server_tokens off;
         client_max_body_size 16m;
         location /healthz { return 200; }
-        location /otlp/ {
+        location /otlp/v1/logs {
           auth_basic "otlp";
           auth_basic_user_file /etc/nginx/htpasswd/htpasswd;
           proxy_http_version 1.1;
