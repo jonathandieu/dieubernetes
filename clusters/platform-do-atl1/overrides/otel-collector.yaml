@@ -1,0 +1,4 @@
+metricsCollector:
+  extraEnvs:
+    - name: CLUSTER_NAME
+      value: platform-do-atl1

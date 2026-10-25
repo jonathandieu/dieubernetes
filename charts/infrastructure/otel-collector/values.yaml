@@ -41,3 +41,159 @@ opentelemetry-collector:
       memory: 64Mi
     limits:
       memory: 192Mi
+
+# One Deployment per cluster (not on the DaemonSet) so kube-state-metrics is
+# scraped once. Scrape C: kubelet, ksm, node-exporter, CoreDNS, thin apiserver.
+# CLUSTER_NAME is set per cluster override. Platform exports ClusterIP Mimir;
+# stage/prod override the endpoint + Authorization.
+metricsCollector:
+  enabled: true
+  mode: deployment
+  replicaCount: 1
+  fullnameOverride: otel-collector-metrics
+  image:
+    repository: otel/opentelemetry-collector-contrib
+  clusterRole:
+    create: true
+    rules:
+      - apiGroups: [""]
+        resources:
+          - nodes
+          - nodes/metrics
+          - nodes/proxy
+          - services
+          - endpoints
+          - pods
+        verbs: [get, list, watch]
+      - nonResourceURLs: ["/metrics"]
+        verbs: [get]
+  extraEnvs:
+    - name: CLUSTER_NAME
+      value: ""
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: kubelet
+              honor_labels: true
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - target_label: __address__
+                  replacement: kubernetes.default.svc:443
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: (.+)
+                  target_label: __metrics_path__
+                  replacement: /api/v1/nodes/$1/proxy/metrics
+            - job_name: kubelet-cadvisor
+              honor_labels: true
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - target_label: __address__
+                  replacement: kubernetes.default.svc:443
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: (.+)
+                  target_label: __metrics_path__
+                  replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: "container_.*_bucket"
+                  action: drop
+            - job_name: kube-state-metrics
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names: [monitoring]
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name]
+                  action: keep
+                  regex: kube-prometheus-stack-kube-state-metrics
+                - source_labels: [__meta_kubernetes_endpoint_port_name]
+                  action: keep
+                  regex: http
+            - job_name: node-exporter
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names: [monitoring]
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name]
+                  action: keep
+                  regex: kube-prometheus-stack-prometheus-node-exporter
+                - source_labels: [__meta_kubernetes_endpoint_port_name]
+                  action: keep
+                  regex: http-metrics
+            - job_name: coredns
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names: [kube-system]
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name]
+                  action: keep
+                  regex: kube-prometheus-stack-coredns
+                - source_labels: [__meta_kubernetes_endpoint_port_name]
+                  action: keep
+                  regex: http-metrics
+            - job_name: apiserver
+              honor_labels: true
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names: [default]
+              relabel_configs:
+                - source_labels:
+                    - __meta_kubernetes_service_name
+                    - __meta_kubernetes_endpoint_port_name
+                  action: keep
+                  regex: kubernetes;https
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: ".+_bucket"
+                  action: drop
+    processors:
+      resource:
+        attributes:
+          - key: cluster
+            value: ${env:CLUSTER_NAME}
+            action: upsert
+    exporters:
+      otlphttp/mimir:
+        metrics_endpoint: http://mimir.monitoring.svc.cluster.local:8080/otlp/v1/metrics
+    service:
+      pipelines:
+        logs: null
+        traces: null
+        metrics:
+          receivers: [otlp, prometheus]
+          processors: [resource]
+          exporters: [otlphttp/mimir]
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 384Mi
