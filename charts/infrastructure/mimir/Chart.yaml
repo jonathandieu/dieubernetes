@@ -1,0 +1,5 @@
+apiVersion: v2
+name: mimir
+description: Self-hosted Mimir (single-process) backed by DO Spaces; metrics store for Grafana
+version: 0.1.0
+type: application

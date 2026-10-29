@@ -1,18 +1,10 @@
 kube-prometheus-stack:
   grafana:
-    enabled: false  # using Grafana Cloud
+    enabled: false  # platform override turns this on; stage/prod query Mimir via Grafana on platform
 
-  prometheus:
-    prometheusSpec:
-      remoteWrite:
-        - url: https://prometheus-prod-66-prod-us-east-3.grafana.net/api/prom/push
-          basicAuth:
-            username:
-              name: grafana-cloud-credentials
-              key: username
-            password:
-              name: grafana-cloud-credentials
-              key: password
+  # Local scrape TSDB only until the collector exports OTLP to Mimir.
+  # No remoteWrite (Grafana Cloud off; no public Prometheus push hostname).
+  prometheus: {}
 
   alertmanager:
     enabled: true
@@ -68,7 +60,10 @@ kube-prometheus-stack:
 alertmanagerSlackWebhook:
   onePasswordItem: alertmanager.slack-webhook
 
+# Grafana Cloud remote_write stays off. Long-term metrics are platform Mimir
+# (OTLP on otlp.dieu.dev), filled by the collector in a later change.
 grafanaCloud:
+  enabled: false
   onePasswordItem: grafana.prometheus
 
 # In-cluster Grafana admin login. Off by default (Grafana is platform-only).
