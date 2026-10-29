@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "ClusterOriginIssuer represents the Cloudflare Origin CA as an external cert-manager issuer.",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object"
+    },
+    "spec": {
+      "type": "object",
+      "required": ["auth", "requestType"],
+      "properties": {
+        "requestType": {
+          "type": "string",
+          "enum": ["OriginRSA", "OriginECC"]
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "tokenRef": {
+              "type": "object",
+              "required": ["name", "key"],
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              }
+            },
+            "serviceKeyRef": {
+              "type": "object",
+              "required": ["name", "key"],
+              "properties": {
+                "name": { "type": "string" },
+                "key": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object"
+    }
+  }
+}

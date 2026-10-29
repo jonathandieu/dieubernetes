@@ -1,0 +1,6 @@
+ClusterOriginIssuer schema for kubeconform Draft-4.
+
+Upstream CRD: cloudflare/origin-ca-issuer v0.15.0
+deploy/crds/cert-manager.k8s.cloudflare.com_clusteroriginissuers.yaml
+
+Not in datreeio/CRDs-catalog. Hand-written Draft-4 from that CRD (tokenRef / serviceKeyRef / requestType only).

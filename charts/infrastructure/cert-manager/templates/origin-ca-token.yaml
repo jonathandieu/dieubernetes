@@ -1,0 +1,21 @@
+{{- if .Values.originCA.enabled }}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ .Values.originCA.secretName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: onepassword
+    kind: ClusterSecretStore
+  target:
+    name: {{ .Values.originCA.secretName }}
+  data:
+    - secretKey: {{ .Values.originCA.secretKey }}
+      remoteRef:
+        key: {{ .Values.originCA.onePasswordItem }}/credential
+{{- end }}
