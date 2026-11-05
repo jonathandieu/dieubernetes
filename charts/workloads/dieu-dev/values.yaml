@@ -5,6 +5,9 @@
 httproute:
   # Per-cluster: stage serves preview.dieu.dev; a prod override would set dieu.dev.
   hostname: preview.dieu.dev
+  # Same web pod. nginx serves /referrals as / on this host.
+  extraHostnames:
+    - referrals.dieu.dev
 
 web:
   image:
