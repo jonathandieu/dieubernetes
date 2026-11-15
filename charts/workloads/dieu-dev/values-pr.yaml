@@ -1,0 +1,29 @@
+# Overlay for dieu.dev GitHub Actions PR previews. ArgoCD does not load this
+# file (ApplicationSet valueFiles are values.yaml + clusters/.../overrides/).
+# Standing stage stays on preview.dieu.dev / tag: latest.
+#
+# GHA must --set hostname and image tags; the placeholders below are only so
+# `helm template -f values-pr.yaml` is kubeconform-valid in this repo's CI.
+#
+#   helm upgrade --install dieu-dev charts/workloads/dieu-dev \
+#     --namespace "dieu-dev-pr-${PR_NUMBER}" --create-namespace \
+#     -f charts/workloads/dieu-dev/values-pr.yaml \
+#     --set "httproute.hostname=pr-${PR_NUMBER}.dieu.dev" \
+#     --set "web.image.tag=sha-${GIT_SHA}" \
+#     --set "api.image.tag=sha-${GIT_SHA}"
+#
+# GHCR pull uses the chart default ExternalSecret (github.ghcr-pull) in the
+# preview namespace. Same Gateway parentRefs as values.yaml (public /
+# cilium-gateway-system). Uninstall: helm uninstall dieu-dev -n dieu-dev-pr-<n>
+# then kubectl delete namespace dieu-dev-pr-<n>.
+
+httproute:
+  hostname: pr-0.dieu.dev
+
+web:
+  image:
+    tag: sha-0000000000000000000000000000000000000000
+
+api:
+  image:
+    tag: sha-0000000000000000000000000000000000000000

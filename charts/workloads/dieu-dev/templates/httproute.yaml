@@ -4,8 +4,7 @@ metadata:
   name: {{ .Release.Name }}
 spec:
   parentRefs:
-    - name: public
-      namespace: cilium-gateway-system
+    {{- toYaml .Values.httproute.parentRefs | nindent 4 }}
   hostnames:
     - {{ .Values.httproute.hostname | quote }}
   rules:

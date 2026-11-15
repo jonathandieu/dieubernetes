@@ -1,15 +1,25 @@
 # The portfolio site: a static web frontend and a small Go metrics API, served
 # together under one hostname (web at /, api at /api). TLS is terminated by the
 # Cilium gateway's *.dieu.dev wildcard, so no cert is needed here.
+#
+# Standing stage (ArgoCD) keeps these defaults: preview.dieu.dev / tag latest.
+# PR previews are helm-installed from dieu.dev GHA with values-pr.yaml; they are
+# not Argo-synced and are not in Kargo.
 
 httproute:
   # Per-cluster: stage serves preview.dieu.dev; a prod override would set dieu.dev.
+  # PR previews override this to pr-<n>.dieu.dev via values-pr.yaml.
   hostname: preview.dieu.dev
+  # Same Cilium Gateway as the standing site. Gateway allowedRoutes.from: All,
+  # so HTTPRoutes in dieu-dev-pr-<n> can attach from another namespace.
+  parentRefs:
+    - name: public
+      namespace: cilium-gateway-system
 
 web:
   image:
     repository: ghcr.io/jonathandieu/dieu-dev-web
-    tag: latest # pinned by CI/Kargo once images are pushed to GHCR
+    tag: latest # standing stage; PR previews pass sha-<full git sha>
   replicas: 1
   port: 8080
   resources:
@@ -22,7 +32,7 @@ web:
 api:
   image:
     repository: ghcr.io/jonathandieu/dieu-dev-api
-    tag: latest # pinned by CI/Kargo once images are pushed to GHCR
+    tag: latest # standing stage; PR previews pass sha-<full git sha>
   replicas: 1
   port: 8080
   # "mock" serves offline fixtures; "prometheus" reads real cluster data.
