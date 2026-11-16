@@ -2,9 +2,9 @@
 # together under one hostname (web at /, api at /api). TLS is terminated by the
 # Cilium gateway's *.dieu.dev wildcard, so no cert is needed here.
 #
-# Standing stage (ArgoCD) keeps these defaults: preview.dieu.dev / tag latest.
-# PR previews are helm-installed from dieu.dev GHA with values-pr.yaml; they are
-# not Argo-synced and are not in Kargo.
+# Standing stage (ArgoCD workloads appset) keeps these defaults:
+# preview.dieu.dev / tag latest. PR previews are a separate ApplicationSet
+# (dieu-dev-pr-previews) using values-pr.yaml. Not Kargo.
 
 httproute:
   # Per-cluster: stage serves preview.dieu.dev; a prod override would set dieu.dev.
@@ -51,4 +51,10 @@ ghcrPull:
 
 imagePullSecrets:
   - name: dieu-dev-ghcr-pull
+
+# Standing app leaves this false (Argo CreateNamespace on dieu-dev). PR
+# previews set it in values-pr.yaml so Application deletion can prune the
+# dieu-dev-pr-<n> namespace.
+preview:
+  manageNamespace: false
 

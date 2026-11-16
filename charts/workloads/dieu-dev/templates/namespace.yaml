@@ -1,0 +1,9 @@
+{{- if .Values.preview.manageNamespace }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: dieu-dev
+    dieu.dev/preview: "true"
+{{- end }}

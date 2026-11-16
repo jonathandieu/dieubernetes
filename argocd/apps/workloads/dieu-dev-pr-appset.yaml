@@ -1,0 +1,65 @@
+# Ephemeral dieu.dev PR previews on stage. The standing workloads
+# ApplicationSet still owns preview.dieu.dev / tag latest in namespace
+# dieu-dev. This generator is not Kargo.
+#
+# Argo clones public dieubernetes anonymously (no GitHub App, no
+# repo-creds). dieu.dev is private, so listing PRs needs a token:
+# github.ghcr-pull via ExternalSecret github-ghcr-pull in this namespace.
+# Do not add a second GitHub App.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: dieu-dev-pr-previews
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchLabels:
+                  purpose: stage
+          - pullRequest:
+              github:
+                owner: jonathandieu
+                repo: dieu.dev
+                tokenRef:
+                  secretName: github-ghcr-pull
+                  key: credential
+              requeueAfterSeconds: 120
+  template:
+    metadata:
+      name: "dieu-dev-pr-{{ .number }}-{{ .name }}"
+      labels:
+        dieu.dev/preview: "true"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/jonathandieu/dieubernetes
+        targetRevision: HEAD
+        path: charts/workloads/dieu-dev
+        helm:
+          releaseName: dieu-dev
+          valueFiles:
+            - values-pr.yaml
+          parameters:
+            - name: httproute.hostname
+              value: "pr-{{ .number }}.dieu.dev"
+            - name: web.image.tag
+              value: "sha-{{ .head_sha }}"
+            - name: api.image.tag
+              value: "sha-{{ .head_sha }}"
+      destination:
+        server: "{{ .server }}"
+        namespace: "dieu-dev-pr-{{ .number }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true
