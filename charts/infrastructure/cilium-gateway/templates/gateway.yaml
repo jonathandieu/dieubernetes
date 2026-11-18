@@ -49,6 +49,19 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    {{- if .Values.gateway.tls.apex }}
+    - name: https-apex
+      protocol: HTTPS
+      port: 443
+      hostname: dieu.dev
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: {{ .Values.gateway.tls.apexSecretName }}
+      allowedRoutes:
+        namespaces:
+          from: All
+    {{- end }}
     {{- range .Values.gateway.extraTlsListeners }}
     - name: {{ .name }}
       protocol: HTTPS

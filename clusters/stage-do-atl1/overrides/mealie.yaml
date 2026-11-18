@@ -1,0 +1,5 @@
+env:
+  BASE_URL: "https://recipes.staging.dieu.dev"
+httproute:
+  hostnames:
+    - recipes.staging.dieu.dev
