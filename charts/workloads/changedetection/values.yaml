@@ -6,7 +6,7 @@ replicas: 1
 
 httproute:
   hostnames:
-    - changes.dieu.dev
+    - changes.dieu.dev  # prod. Stage override: changes.staging.dieu.dev
 
 persistence:
   enabled: true

@@ -7,7 +7,7 @@ spec:
     - name: public
       namespace: cilium-gateway-system
   hostnames:
-    - analytics.dieu.dev
+    {{- toYaml .Values.httproute.hostnames | nindent 4 }}
   rules:
     - backendRefs:
         - name: {{ .Release.Name }}-plausible-analytics

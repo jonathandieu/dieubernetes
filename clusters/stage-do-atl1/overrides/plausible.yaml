@@ -1,0 +1,5 @@
+httproute:
+  hostnames:
+    - analytics.staging.dieu.dev
+plausible-analytics:
+  baseURL: "https://analytics.staging.dieu.dev"

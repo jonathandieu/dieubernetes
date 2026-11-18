@@ -2,3 +2,8 @@ gateway:
   create: true
   lbAnnotations:
     kubernetes.digitalocean.com/load-balancer-id: "f0f43b4a-d2cd-4f82-a4f1-4bebccd2b3ac"
+  # Stage must not terminate foo.dieu.dev. The chart default wildcard is
+  # *.dieu.dev (one label); recipes.staging.dieu.dev needs this listener.
+  tls:
+    hostname: "*.staging.dieu.dev"
+    secretName: cilium-gateway-staging-wildcard-tls

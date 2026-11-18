@@ -6,12 +6,12 @@ replicas: 1
 
 env:
   ALLOW_SIGNUP: "false"
-  BASE_URL: "https://recipes.dieu.dev"
+  BASE_URL: "https://recipes.dieu.dev"  # prod. Stage override: recipes.staging.dieu.dev
   DB_ENGINE: sqlite
 
 httproute:
   hostnames:
-    - recipes.dieu.dev
+    - recipes.dieu.dev  # prod. Stage override: recipes.staging.dieu.dev
 
 persistence:
   enabled: true
