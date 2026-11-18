@@ -102,6 +102,13 @@ jobs:
               echo "--- $chart + $override ---"
               kubeconform_chart -f "$override"
             done
+            # Argo PR-preview overlay (not loaded by the standing workloads
+            # appset). Validates hostname / tag overrides against the same
+            # templates as the standing app.
+            if [ -f "$chart/values-pr.yaml" ]; then
+              echo "--- $chart + values-pr.yaml ---"
+              kubeconform_chart --namespace dieu-dev-pr-0 -f "$chart/values-pr.yaml"
+            fi
           done
 
   argocd-validate:

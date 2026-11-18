@@ -1,0 +1,27 @@
+# Overlay for Argo CD ApplicationSet dieu-dev-pr-previews. The workloads
+# ApplicationSet does not load this file (valueFiles are values.yaml +
+# clusters/.../overrides/). Standing stage stays on preview.dieu.dev /
+# tag: latest.
+#
+# The ApplicationSet sets httproute.hostname and image tags from the open
+# dieu.dev PR (pr-<n>.dieu.dev, sha-<head sha>) and destinations
+# dieu-dev-pr-<n> on stage. Placeholders below keep `helm template -f
+# values-pr.yaml` kubeconform-valid in this repo's CI.
+#
+# GHCR pull uses the chart default ExternalSecret (github.ghcr-pull) in the
+# preview namespace. Same Gateway parentRefs as values.yaml (public /
+# cilium-gateway-system).
+
+httproute:
+  hostname: pr-0.dieu.dev
+
+web:
+  image:
+    tag: sha-0000000000000000000000000000000000000000
+
+api:
+  image:
+    tag: sha-0000000000000000000000000000000000000000
+
+preview:
+  manageNamespace: true
