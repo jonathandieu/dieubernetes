@@ -1,6 +1,14 @@
 image:
   repository: ghcr.io/dgtlmoon/changedetection.io
-  tag: ""  # managed by Kargo
+  # Was an empty string with a "managed by Kargo" comment, but no Kargo
+  # Warehouse/Stage exists for this app -- it silently fell back to
+  # whatever "latest" resolved to at pod creation. Unlike mealie, the
+  # currently-running build's digest doesn't match any tag on the
+  # registry anymore (including "latest" and "dev") -- it's an orphaned
+  # build that "latest" has since moved past, so there's no way to pin
+  # this to what's already running. This is a real (small) version bump
+  # to the current stable release, not a no-op.
+  tag: "0.49.1"
 
 replicas: 1
 
