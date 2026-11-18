@@ -18,6 +18,7 @@ gateway:
     # Wildcard covers all app subdomains without a separate cert per listener.
     # cert-manager's Gateway API support (cert-manager.io/issuer* annotations)
     # derives the Certificate from this hostname automatically.
+    # Prod/platform: *.dieu.dev. Stage override: *.staging.dieu.dev (one extra label).
     hostname: "*.dieu.dev"
     secretName: cilium-gateway-wildcard-tls
     # Fallback only when originLock.originCA.enabled is false.

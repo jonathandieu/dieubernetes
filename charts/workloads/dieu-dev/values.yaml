@@ -1,10 +1,10 @@
 # The portfolio site: a static web frontend and a small Go metrics API, served
 # together under one hostname (web at /, api at /api). TLS is terminated by the
-# Cilium gateway's *.dieu.dev wildcard, so no cert is needed here.
+# Cilium gateway wildcard (*.dieu.dev on prod, *.staging.dieu.dev on stage).
 
 httproute:
-  # Per-cluster: stage serves preview.dieu.dev; a prod override would set dieu.dev.
-  hostname: preview.dieu.dev
+  # Chart default is prod. Stage override: preview.staging.dieu.dev.
+  hostname: dieu.dev
 
 web:
   image:

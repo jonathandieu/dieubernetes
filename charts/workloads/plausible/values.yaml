@@ -1,3 +1,7 @@
+httproute:
+  hostnames:
+    - analytics.dieu.dev
+
 plausible-analytics:  # imio/plausible-analytics
   image:
     # Explicit repository + tag (rather than relying on the subchart's own
@@ -13,7 +17,7 @@ plausible-analytics:  # imio/plausible-analytics
   ingress:
     enabled: false  # routing via Cilium Gateway HTTPRoute
 
-  baseURL: "https://analytics.dieu.dev"
+  baseURL: "https://analytics.dieu.dev"  # prod. Stage override: analytics.staging.dieu.dev
   disableRegistration: true
 
   # DB connection URLs. The chart's defaults point at `plausible-analytics-*`
