@@ -8,6 +8,9 @@ spec:
       namespace: cilium-gateway-system
   hostnames:
     - {{ .Values.httproute.hostname | quote }}
+    {{- range (.Values.httproute.extraHostnames | default list) }}
+    - {{ . | quote }}
+    {{- end }}
   rules:
     # /api/* -> the Go metrics API (longer prefix wins, so this takes precedence).
     - matches:
