@@ -1,9 +1,10 @@
 # The portfolio site: a static web frontend and a small Go metrics API, served
 # together under one hostname (web at /, api at /api). TLS is terminated by the
-# Cilium gateway wildcard (*.dieu.dev on prod, *.staging.dieu.dev on stage).
+# Cilium gateway. *.dieu.dev does not cover the zone apex; prod must set
+# gateway.tls.apex on cilium-gateway. Stage uses *.staging.dieu.dev.
 
 httproute:
-  # Chart default is prod. Stage override: preview.staging.dieu.dev.
+  # Chart default is prod apex. Stage override: preview.staging.dieu.dev.
   hostname: dieu.dev
 
 web:

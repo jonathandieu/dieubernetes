@@ -23,6 +23,11 @@ gateway:
     secretName: cilium-gateway-wildcard-tls
     # Fallback only when originLock.originCA.enabled is false.
     clusterIssuer: selfsigned
+    # Zone apex dieu.dev is not covered by *.dieu.dev (one label). Prod
+    # Gateway that serves the portfolio HTTPRoute must set this. Stage
+    # must leave it off.
+    apex: false
+    apexSecretName: cilium-gateway-apex-tls
   # Extra HTTPS listeners (same Gateway, unique hostname). Needed for names
   # the apex wildcard does not cover, e.g. *.internal.dieu.dev.
   extraTlsListeners: []
